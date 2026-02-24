@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMPM Operations | Availability Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            ampm: {
+                                blue: '#11284a',
+                                orange: '#e87200'
+                            }
+                        }
+                    }
+                }
+            }
+        </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        
+        /* UI Kit Corporativo */
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .btn-action { background-color: #0f172a; color: white; transition: all 0.2s; }
+        .btn-action:hover { background-color: #334155; transform: translateY(-1px); }
+        
+        /* Matriz de Estado (Heatmap) */
+        .grid-heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
+        .heatmap-cell { 
+            height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+        }
+        .heatmap-cell:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #94a3b8; }
+        
+        /* Estados */
+        .st-ok { background-color: #f0fdf4; color: #166534; border-color: #dcfce7; }
+        .st-warn { background-color: #fefce8; color: #854d0e; border-color: #fef08a; } /* Fantasma */
+        .st-crit { background-color: #fef2f2; color: #991b1b; border-color: #fecaca; } /* Black Hole */
+    </style>
+</head>
+<body class="p-6 min-h-screen">
+
+    <div class="max-w-[1400px] mx-auto space-y-6">
+        
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-auto bg-ampm-blue rounded-lg flex items-center justify-center px-4 py-2 shadow-inner">
+                    <img src="Logo AMPM Blanco.png" alt="AMPM Logo" class="h-5 object-contain">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AMPM - Análisis de Black Holes</h1>
+                    <p class="text-sm text-slate-500 font-medium">Detección de Anomalías en Tiempo Real</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 mt-4 md:mt-0">
+                <button id="btnExcel" onclick="exportToExcel()" class="hidden h-12 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-colors">
+                    <i class="fa-solid fa-file-csv text-lg"></i> Exportar Data
+                </button>
+            </div>
+        </header>
+
+        <div class="card p-1">
+            <div class="flex flex-col md:flex-row gap-4 p-4 items-end bg-slate-50/50 rounded-lg">
+                
+                <div class="w-full md:w-48">
+                    <label for="fechaInput" class="text-xs font-bold text-slate-500 uppercase ml-1">Fecha Corte</label>
+                    <input type="date" id="fechaInput" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-ampm-blue">
+                </div>
+                
+                <div class="w-full md:flex-1">
+                    <label for="productSelect" class="text-xs font-bold text-slate-500 uppercase ml-1">SKU Producto</label>
+                    <div class="flex flex-col sm:flex-row items-center gap-2 mt-1">
+                        
+                        <select id="productSelect" title="Seleccionar producto" aria-label="Seleccionar producto" class="w-full sm:flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 outline-none focus:border-ampm-blue">
+                            <option value="">Seleccionar producto de la lista...</option>
+                            <option value="12345">Hielo 5 lbs</option>
+                            <option value="24474006818">Gatorade Azul 500ml</option>
+                            <option value="54321">Coca-Cola 3L</option>
+                        </select>
+                        
+                        <span class="text-slate-400 text-xs font-bold px-1 hidden sm:block">Ó</span>
+                        
+                        <div class="relative w-full sm:w-48">
+                            <i class="fa-solid fa-tag absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="skuInput" placeholder="Escribir SKU..." class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-ampm-blue">
+                        </div>
+
+                    </div>
+                </div>
+
+                <button onclick="runAnalysis()" class="w-full md:w-auto bg-ampm-orange text-white hover:opacity-90 h-[42px] px-6 rounded-lg font-semibold shadow-sm transition-all whitespace-nowrap flex items-center justify-center gap-2">
+                    <span id="btnLabel">Generar Análisis Black Holes</span>
+                    <i id="btnIcon" class="fa-solid fa-bolt"></i>
+                    <div id="loader" class="hidden h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+
+            </div>
+        </div>
+
+        <div id="dashboardView" class="hidden space-y-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="card p-5 border-l-[6px] border-ampm-blue">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Producto</p>
+                    <h3 class="text-lg font-bold text-slate-800 truncate mt-1" id="kpiProd">...</h3>
+                    <p class="text-xs font-mono text-slate-500" id="kpiSku">...</p>
+                </div>
+                <div class="card p-5 border-l-[6px] border-red-500 bg-red-50/30">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-red-600 uppercase">Black Holes</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiBH">0</h3>
+                            <p class="text-xs text-red-600/70 font-medium mt-1">Tiendas Críticas</p>
+                        </div>
+                        <div class="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center text-red-500"><i class="fa-solid fa-circle-exclamation"></i></div>
+                    </div>
+                </div>
+                <div class="card p-5 border-l-[6px] border-amber-400 bg-amber-50/30">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-amber-600 uppercase">Ventas Fantasma</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiFan">0</h3>
+                            <p class="text-xs text-amber-600/70 font-medium mt-1">Inv. Lógico 0</p>
+                        </div>
+                        <div class="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-500"><i class="fa-solid fa-ghost"></i></div>
+                    </div>
+                </div>
+                <div class="card p-5 border-l-[6px] border-slate-400">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase">Oportunidad Perdida</p>
+                            <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiMoney">$0</h3>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Est. Turno Actual</p>
+                        </div>
+                        <div class="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500"><i class="fa-solid fa-sack-dollar"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div class="xl:col-span-2 card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-800">Panorama de Stock (Todas las Tiendas)</h3>
+                        <div class="flex gap-2">
+                                <span class="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400"><div class="w-2 h-2 bg-ampm-blue rounded-full"></div> Stock OK</span>
+                             <span class="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400"><div class="w-2 h-2 bg-red-500 rounded-full"></div> Crítico</span>
+                        </div>
+                    </div>
+                    <div class="w-full overflow-x-auto pb-2 custom-scrollbar">
+                        <div class="h-[300px] w-[1500px]"> <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="font-bold text-slate-800 mb-2">Mapa de Calor (Snapshot)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Visualización completa de la red de tiendas.</p>
+                    
+                    <div id="heatmapContainer" class="grid-heatmap max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                        </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex gap-4 text-xs justify-center">
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-red-100 border border-red-200 rounded-sm"></div><span class="text-slate-600">Black Hole</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded-sm"></div><span class="text-slate-600">Fantasma</span></div>
+                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-green-100 border border-green-200 rounded-sm"></div><span class="text-slate-600">Operativo</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="font-bold text-slate-800 text-sm">Detalle de Tiendas (Data Cruda)</h3>
+                </div>
+                <div class="overflow-x-auto max-h-[400px]">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10">
+                            <tr>
+                                <th class="p-4 border-b">ID Tienda</th>
+                                <th class="p-4 border-b text-center">Stock Físico</th>
+                                <th class="p-4 border-b text-center">Ventas (Snapshot)</th>
+                                <th class="p-4 border-b">Diagnóstico</th>
+                                <th class="p-4 border-b text-center">Hora Muestra</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-600">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN
+        // ==========================================
+        const WEBHOOK_URL = "https://genaroroustan1.app.n8n.cloud/webhook/analisis-bh";
+        // ==========================================
+
+        document.getElementById('fechaInput').valueAsDate = new Date();
+
+        // Selector de producto vs SKU manual (exclusión mutua)
+        const productSelectEl = document.getElementById('productSelect');
+        const skuInputEl = document.getElementById('skuInput');
+
+        if (productSelectEl && skuInputEl) {
+            productSelectEl.addEventListener('change', () => {
+                if (productSelectEl.value) {
+                    skuInputEl.value = '';
+                }
+            });
+
+            skuInputEl.addEventListener('input', () => {
+                if (skuInputEl.value) {
+                    productSelectEl.value = '';
+                }
+            });
+        }
+        let globalData = [];
+        let chartInstance = null;
+
+        async function runAnalysis() {
+            if (!WEBHOOK_URL || WEBHOOK_URL.includes("PEGA_AQUI")) {
+                alert("⚠️ ERROR: Falta configurar la URL de n8n en el código.");
+                return;
+            }
+
+            const skuFinal = document.getElementById('productSelect').value || document.getElementById('skuInput').value;
+            if(!skuFinal) {
+                alert("Por favor selecciona un producto o ingresa un SKU manualmente.");
+                return;
+            }
+
+            // Loading UI
+            const btnLabel = document.getElementById('btnLabel');
+            const btnIcon = document.getElementById('btnIcon');
+            const loader = document.getElementById('loader');
+            
+            btnLabel.innerText = "Procesando...";
+            btnIcon.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('btnExcel').classList.add('hidden');
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        fecha: document.getElementById('fechaInput').value,
+                        sku: skuFinal
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const rawData = await response.json();
+                const data = Array.isArray(rawData) ? rawData[0] : rawData;
+                globalData = data;
+
+                renderUI(data);
+                document.getElementById('btnExcel').classList.remove('hidden');
+
+            } catch (error) {
+                alert("Error de conexión: " + error.message);
+            } finally {
+                btnLabel.innerText = "Generar Análisis Black Holes";
+                btnIcon.classList.remove('hidden');
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderUI(data) {
+            const container = document.getElementById('dashboardView');
+
+            // Si n8n avisa que Azure falló o no hay detalles
+            if (!data || !data.analisis_detalle || data.analisis_detalle.length === 0) {
+                alert("Atención: No se encontraron datos de ventas en Azure para esta fecha.");
+                return;
+            }
+
+            container.classList.remove('hidden');
+
+            // 1. Textos Header
+            document.getElementById('kpiProd').innerText = data.producto || "Producto Desconocido";
+            document.getElementById('kpiSku').innerText = "SKU: " + data.sku;
+
+            // Si hay datos, procede con tu filtro de tiendas <= 89
+            const detalles = data.analisis_detalle.filter(item => {
+                const id = parseInt(item.tienda_id?.toString().replace(/\D/g, ''), 10);
+                if (Number.isNaN(id)) return false;
+                return id <= 89 && ![11, 17, 22, 24].includes(id);
+            });
+
+            // --- PASO 1: LIMPIEZA DE DUPLICADOS ---
+            // Si una tienda tiene varios registros, nos quedamos con el más crítico (menor stock)
+            const tiendasUnicas = Object.values(detalles.reduce((acc, curr) => {
+                // Si la tienda ya existe, comparamos stock
+                if (!acc[curr.tienda_id] || curr.stock < acc[curr.tienda_id].stock) {
+                    acc[curr.tienda_id] = curr;
+                }
+                return acc;
+            }, {}));
+
+            // Ordenamos por ID de tienda para que se vea ordenado (1, 2, 3...)
+            tiendasUnicas.sort((a, b) => (a.tienda_id || 0) - (b.tienda_id || 0));
+
+            // --- 2. KPIs ---
+            const bh = tiendasUnicas.filter(d => d.estado.includes("BLACK HOLE"));
+            const fan = tiendasUnicas.filter(d => d.estado.includes("SIN STOCK"));
+            
+            document.getElementById('kpiBH').innerText = bh.length;
+            document.getElementById('kpiFan').innerText = fan.length;
+            document.getElementById('kpiMoney').innerText = "$" + (bh.length * 35).toLocaleString();
+
+            // --- 3. GRÁFICO COMPLETO (SCROLLABLE) ---
+            // Ya no filtramos por problemas. Mostramos TODO.
+            
+            // Ajustar ancho del contenedor del gráfico según cantidad de tiendas
+            // (50px por tienda aprox para que se vea bien)
+            const chartContainer = document.getElementById('chartScrollContainer');
+            // Si no existe el contenedor scroll, lo creamos dinámicamente o asegúrate de actualizar el HTML abajo
+            
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: tiendasUnicas.map(d => "T-" + (d.tienda_id || "?")),
+                    datasets: [{
+                        label: 'Stock Físico',
+                        data: tiendasUnicas.map(d => d.stock),
+                        backgroundColor: tiendasUnicas.map(d => {
+                            if(d.estado.includes("BLACK")) return '#ef4444'; // Rojo
+                            if(d.estado.includes("SIN")) return '#f59e0b';   // Amarillo
+                            return '#11284a'; // Azul Corporativo
+                        }),
+                        borderRadius: 4,
+                        barPercentage: 0.8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Importante para el scroll
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `Tienda ${items[0].label.replace('T-', '')}`,
+                                label: (item) => `Stock: ${item.raw} unid.`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false }, ticks: { font: {size: 10}, autoSkip: false, maxRotation: 90 } }
+                    }
+                }
+            });
+
+            // --- 4. HEATMAP (Matriz) ---
+            const grid = document.getElementById('heatmapContainer');
+            grid.innerHTML = "";
+            
+            tiendasUnicas.forEach(d => {
+                const el = document.createElement('div');
+                let css = "heatmap-cell st-ok";
+                if(d.estado.includes("BLACK")) css = "heatmap-cell st-crit";
+                if(d.estado.includes("SIN")) css = "heatmap-cell st-warn";
+                
+                el.className = css;
+                el.innerHTML = `<span>T-${d.tienda_id||"?"}</span><span class="text-[9px] opacity-75">${d.stock}</span>`;
+                el.title = `Tienda ${d.tienda_id}\nStock: ${d.stock}\nEstado: ${d.estado}`;
+                grid.appendChild(el);
+            });
+
+            // --- 5. TABLA ---
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            
+            tiendasUnicas.forEach(d => {
+                let badge = `<span class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold">OK</span>`;
+                if(d.estado.includes("BLACK")) badge = `<span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold">BLACK HOLE</span>`;
+                if(d.estado.includes("SIN")) badge = `<span class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold">FANTASMA</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-slate-700">Tienda ${d.tienda_id || "N/A"}</td>
+                    <td class="p-4 text-center font-mono font-bold ${d.stock===0?'text-red-600':''}">${d.stock}</td>
+                    <td class="p-4 text-center text-slate-500">${d.ventas_cercanas || 0}</td>
+                    <td class="p-4">${badge}</td>
+                    <td class="p-4 text-center text-xs text-slate-400">${d.hora.split(' ')[1]}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportToExcel() {
+            if(!globalData.analisis_detalle) return;
+            
+            let csv = "Tienda,Stock,Ventas,Estado,Hora\n";
+            globalData.analisis_detalle.forEach(d => {
+                const cleanState = d.estado.replace(/[🔴🟡]/g, '').trim();
+                csv += `${d.tienda_id||"N/A"},${d.stock},${d.ventas_cercanas||0},${cleanState},${d.hora}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `AMPM_Analisis_${document.getElementById('fechaInput').value}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
