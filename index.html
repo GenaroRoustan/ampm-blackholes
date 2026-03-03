@@ -9,457 +9,561 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
-:root{--navy:#0a1628;--navy2:#111f38;--orange:#e87200;--red-bh:#dc2626;--border:rgba(255,255,255,0.07)}
+:root{--navy:#0a1628;--navy2:#111f38;--orange:#e87200;--border:rgba(255,255,255,0.07)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans',sans-serif;background:var(--navy);color:#e2e8f0;min-height:100vh}
 .mono{font-family:'Space Mono',monospace}
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
 .card{background:var(--navy2);border:1px solid var(--border);border-radius:14px}
-.kpi-card{position:relative;overflow:hidden;padding:22px 24px;border-radius:14px;border:1px solid var(--border);background:var(--navy2);transition:transform .2s}
+.kpi-card{position:relative;overflow:hidden;padding:20px 22px;border-radius:14px;border:1px solid var(--border);background:var(--navy2);transition:transform .2s}
 .kpi-card:hover{transform:translateY(-2px)}
-.kpi-card .bg-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;opacity:.08;filter:blur(30px)}
-.kpi-val{font-family:'Space Mono',monospace;font-size:2.4rem;font-weight:700;line-height:1}
-.matrix-wrap{overflow:auto;max-height:520px}
-.matrix-table{border-collapse:separate;border-spacing:3px;font-size:11px}
-.matrix-table th{position:sticky;background:var(--navy2);z-index:2;font-family:'Space Mono',monospace;font-size:10px;color:#94a3b8;font-weight:400;padding:4px 6px;white-space:nowrap}
-.matrix-table th.col-header{top:0;text-align:center;min-width:32px}
-.matrix-table th.row-header{left:0;text-align:right;padding-right:10px;min-width:160px;z-index:3}
-.matrix-table th.corner{top:0;left:0;z-index:4}
-.matrix-cell{width:32px;height:26px;text-align:center;vertical-align:middle;border-radius:4px;cursor:pointer;transition:transform .15s,filter .15s;font-family:'Space Mono',monospace;font-size:10px;font-weight:700}
-.matrix-cell:hover{transform:scale(1.3);filter:brightness(1.3);z-index:10;position:relative}
-.cell-ok{background:rgba(5,150,105,0.15);color:#34d399}
-.cell-bh-conf{background:rgba(220,38,38,0.75);color:#fff}
-.cell-bh-susp{background:rgba(220,38,38,0.3);color:#fca5a5}
-.cell-fantasma{background:rgba(217,119,6,0.5);color:#fcd34d}
-.cell-empty{background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.15)}
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
-#modal-overlay.open{display:flex}
-#modal-box{background:var(--navy2);border:1px solid rgba(255,255,255,.1);border-radius:18px;width:90%;max-width:720px;max-height:85vh;overflow-y:auto;padding:28px}
-.tl-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Space Mono',monospace;cursor:pointer;transition:filter .15s;border-radius:3px}
-.tl-seg:hover{filter:brightness(1.4)}
-.spin{animation:spin .8s linear infinite}
+.kpi-glow{position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;opacity:.1;filter:blur(28px)}
+.kpi-val{font-family:'Space Mono',monospace;font-size:2.2rem;font-weight:700;line-height:1}
+/* MATRIX */
+.matrix-wrap{overflow:auto;max-height:540px}
+.mtable{border-collapse:separate;border-spacing:2px}
+.mtable th{position:sticky;background:var(--navy2);z-index:2;font-family:'Space Mono',monospace;font-size:9px;color:#475569;font-weight:400;padding:3px 5px;white-space:nowrap}
+.mtable th.col-h{top:0;text-align:center;min-width:30px}
+.mtable th.row-h{left:0;text-align:right;padding-right:10px;min-width:155px;z-index:3;font-size:10px}
+.mtable th.corner{top:0;left:0;z-index:4}
+.mcell{width:30px;height:24px;text-align:center;vertical-align:middle;border-radius:3px;cursor:pointer;transition:transform .12s,filter .12s;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;border:none}
+.mcell:hover{transform:scale(1.35);filter:brightness(1.4);z-index:20;position:relative}
+.c-ok   {background:rgba(5,150,105,.18);color:#34d399}
+.c-bhc  {background:rgba(220,38,38,.8);color:#fff}
+.c-bhs  {background:rgba(220,38,38,.28);color:#fca5a5}
+.c-fan  {background:rgba(217,119,6,.55);color:#fcd34d}
+.c-nd   {background:rgba(255,255,255,.03);color:rgba(255,255,255,.12)}
+/* MODAL */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(5px);z-index:200;align-items:center;justify-content:center}
+#modal-bg.open{display:flex}
+#modal-box{background:var(--navy2);border:1px solid rgba(255,255,255,.1);border-radius:18px;width:92%;max-width:740px;max-height:88vh;overflow-y:auto;padding:26px}
+.tl-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Space Mono',monospace;cursor:default;border-radius:2px;min-width:0}
+.spin{animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.4}}
-.pulse-red{animation:pulse-red 1.5s ease-in-out infinite}
-.tab-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:#94a3b8;background:transparent;border:none}
+@keyframes pulse-r{0%,100%{opacity:1}50%{opacity:.35}}
+.pulse-r{animation:pulse-r 1.4s ease-in-out infinite}
+.tab-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;color:#64748b;background:transparent;border:none}
 .tab-btn.active{background:var(--orange);color:#fff}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;font-family:'Space Mono',monospace}
-.badge-bh{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)}
-.badge-susp{background:rgba(220,38,38,.1);color:#fca5a5;border:1px solid rgba(220,38,38,.2)}
-.badge-fan{background:rgba(217,119,6,.2);color:#fcd34d;border:1px solid rgba(217,119,6,.3)}
-.badge-ok{background:rgba(5,150,105,.15);color:#34d399;border:1px solid rgba(5,150,105,.25)}
-.scanline{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.015) 2px,rgba(255,255,255,.015) 4px)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.fade-up{animation:fadeUp .4s ease both}
-.fade-up-1{animation-delay:.05s}.fade-up-2{animation-delay:.1s}.fade-up-3{animation-delay:.15s}.fade-up-4{animation-delay:.2s}
-.tooltip{position:fixed;background:#0f1f38;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;font-size:11px;pointer-events:none;z-index:999;white-space:pre;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-input,select{color:#e2e8f0}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;font-family:'Space Mono',monospace}
+.b-bhc{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)}
+.b-bhs{background:rgba(220,38,38,.1);color:#fca5a5;border:1px solid rgba(220,38,38,.2)}
+.b-fan{background:rgba(217,119,6,.2);color:#fcd34d;border:1px solid rgba(217,119,6,.3)}
+.b-ok {background:rgba(5,150,105,.15);color:#34d399;border:1px solid rgba(5,150,105,.25)}
+.scanline{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.014) 2px,rgba(255,255,255,.014) 4px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .35s ease both}.fu1{animation-delay:.04s}.fu2{animation-delay:.09s}.fu3{animation-delay:.14s}.fu4{animation-delay:.19s}
+#tip{position:fixed;background:#0d1e35;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:7px 11px;font-size:11px;pointer-events:none;z-index:999;white-space:pre;display:none;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+input,select{color:#e2e8f0 !important}
 </style>
 </head>
 <body>
+<div id="tip"></div>
 
-<div id="tooltip" class="tooltip" style="display:none"></div>
-
-<div id="modal-overlay">
+<!-- MODAL -->
+<div id="modal-bg">
   <div id="modal-box">
-    <div class="flex justify-between items-start mb-6">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div>
-        <p style="font-family:'Space Mono',monospace;font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px">DETALLE TIENDA</p>
-        <h2 style="font-size:1.25rem;font-weight:700" id="modal-title">—</h2>
-        <p style="font-size:.85rem;color:#94a3b8;margin-top:4px" id="modal-subtitle">—</p>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:3px">DETALLE TIENDA</p>
+        <h2 style="font-size:1.2rem;font-weight:700" id="m-title">—</h2>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center" id="m-sub"></div>
       </div>
-      <button onclick="closeModal()" style="color:#64748b;font-size:1.25rem;background:none;border:none;cursor:pointer">✕</button>
+      <button onclick="closeMod()" style="color:#64748b;font-size:1.1rem;background:none;border:none;cursor:pointer;padding:4px">✕</button>
     </div>
-    <div id="modal-body"></div>
+    <div id="m-body"></div>
   </div>
 </div>
 
-<div style="max-width:1500px;margin:0 auto;padding:24px 16px" class="space-y-5">
+<!-- APP -->
+<div style="max-width:1500px;margin:0 auto;padding:20px 16px">
 
   <!-- HEADER -->
-  <header class="card scanline" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="height:42px;width:42px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center">
-        <i class="fa-solid fa-circle-dot" style="color:white;font-size:1.2rem"></i>
+  <header class="card scanline" style="padding:18px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="height:40px;width:40px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="fa-solid fa-circle-dot" style="color:white;font-size:1.1rem"></i>
       </div>
       <div>
-        <h1 style="font-size:1.3rem;font-weight:700;letter-spacing:-.02em">AMPM <span style="color:var(--orange)">Black Holes</span> Intelligence</h1>
-        <p style="font-size:10px;color:#64748b;font-family:'Space Mono',monospace">DETECCIÓN DE ANOMALÍAS · ANÁLISIS HORA×TIENDA</p>
+        <h1 style="font-size:1.25rem;font-weight:700;letter-spacing:-.02em">AMPM <span style="color:var(--orange)">Black Holes</span> Intelligence</h1>
+        <p style="font-size:9px;color:#475569;font-family:'Space Mono',monospace;margin-top:1px">DETECCIÓN DE ANOMALÍAS · ANÁLISIS HORA×TIENDA</p>
       </div>
     </div>
-    <button id="btnExport" onclick="exportToCSV()" style="display:none;align-items:center;gap:8px;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:white;background:#059669;border:none;cursor:pointer">
+    <button id="btnExport" onclick="doExport()" style="display:none;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;color:white;background:#059669;border:none;cursor:pointer">
       <i class="fa-solid fa-file-csv"></i> Exportar CSV
     </button>
   </header>
 
   <!-- CONTROLS -->
-  <div class="card" style="padding:16px">
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+  <div class="card" style="padding:14px 16px;margin-bottom:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
       <div>
-        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">Fecha Corte</div>
-        <input type="date" id="fechaInput" style="background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;width:160px">
+        <div style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:4px">Fecha Corte</div>
+        <input type="date" id="fechaInput" style="background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:13px;outline:none;width:155px">
       </div>
-      <div style="flex:1;min-width:240px">
-        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">Producto / SKU</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <select id="productSelect" style="flex:1;min-width:180px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none">
+      <div style="flex:1;min-width:220px">
+        <div style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:4px">Producto / SKU</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+          <select id="productSelect" style="flex:1;min-width:170px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:13px;outline:none">
             <option value="">Seleccionar producto...</option>
             <option value="12345">Hielo 5 lbs</option>
             <option value="24474006818">Gatorade Azul 500ml</option>
             <option value="54321">Coca-Cola 3L</option>
           </select>
-          <span style="color:#475569;font-size:11px;font-family:'Space Mono',monospace">ó</span>
-          <input type="text" id="skuInput" placeholder="SKU manual..." style="width:150px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none">
+          <span style="color:#334155;font-size:10px;font-family:'Space Mono',monospace">ó</span>
+          <input type="text" id="skuInput" placeholder="SKU manual..." style="width:145px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:13px;outline:none">
         </div>
       </div>
       <div>
-        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">BH si ≥ N horas</div>
-        <input type="number" id="bhThreshold" value="2" min="1" max="12" style="width:70px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;text-align:center">
+        <div style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:4px">BH si ≥ N horas</div>
+        <input type="number" id="bhThreshold" value="1" min="1" max="12" style="width:65px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 11px;font-size:13px;outline:none;text-align:center">
       </div>
-      <button onclick="runAnalysis()" id="btnRun" style="display:flex;align-items:center;gap:8px;padding:10px 24px;border-radius:8px;font-weight:700;color:white;font-size:13px;background:var(--orange);border:none;cursor:pointer;white-space:nowrap;transition:opacity .2s">
+      <button onclick="runAnalysis()" id="btnRun" style="display:flex;align-items:center;gap:7px;padding:9px 22px;border-radius:8px;font-weight:700;color:white;font-size:13px;background:var(--orange);border:none;cursor:pointer;white-space:nowrap">
         <span id="btnLabel">Generar Análisis</span>
         <i id="btnIcon" class="fa-solid fa-bolt"></i>
-        <div id="loader" class="spin" style="display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%"></div>
+        <div id="loader" class="spin" style="display:none;width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%"></div>
       </button>
     </div>
   </div>
 
   <!-- DASHBOARD -->
-  <div id="dashboard" style="display:none">
+  <div id="dash" style="display:none">
 
     <!-- KPIs -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">
-      <div class="kpi-card fade-up fade-up-1">
-        <div class="bg-glow" style="background:var(--orange)"></div>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:8px">Producto</p>
-        <p style="font-size:1rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="kpiProd">—</p>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;margin-top:4px" id="kpiSku">—</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:16px">
+      <div class="kpi-card fu fu1">
+        <div class="kpi-glow" style="background:var(--orange)"></div>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:7px">Producto</p>
+        <p style="font-size:.95rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="kProd">—</p>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;margin-top:3px" id="kSku">—</p>
       </div>
-      <div class="kpi-card fade-up fade-up-2" style="box-shadow:0 0 30px rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.25)">
-        <div class="bg-glow" style="background:#dc2626"></div>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#f87171;text-transform:uppercase;margin-bottom:8px">Black Holes</p>
-        <div class="kpi-val" style="color:#f87171" id="kpiBH">0</div>
-        <p style="font-size:10px;color:#64748b;margin-top:4px">Tiendas confirmadas</p>
+      <div class="kpi-card fu fu2" style="box-shadow:0 0 28px rgba(220,38,38,.14);border-color:rgba(220,38,38,.28)">
+        <div class="kpi-glow" style="background:#dc2626"></div>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#f87171;text-transform:uppercase;margin-bottom:7px">Black Holes</p>
+        <div class="kpi-val" style="color:#f87171" id="kBH">0</div>
+        <p style="font-size:9px;color:#475569;margin-top:3px">Tiendas confirmadas</p>
       </div>
-      <div class="kpi-card fade-up fade-up-2">
-        <div class="bg-glow" style="background:#dc2626;opacity:.05"></div>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fca5a5;text-transform:uppercase;margin-bottom:8px;opacity:.7">BH Sospechosos</p>
-        <div class="kpi-val" style="color:#fca5a5;opacity:.7" id="kpiBHsusp">0</div>
-        <p style="font-size:10px;color:#64748b;margin-top:4px">&lt; umbral horas</p>
+      <div class="kpi-card fu fu2">
+        <div class="kpi-glow" style="background:#dc2626;opacity:.06"></div>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#fca5a5;text-transform:uppercase;margin-bottom:7px;opacity:.7">BH Sospechosos</p>
+        <div class="kpi-val" style="color:#fca5a5;opacity:.65" id="kBHs">0</div>
+        <p style="font-size:9px;color:#475569;margin-top:3px">&lt; umbral horas</p>
       </div>
-      <div class="kpi-card fade-up fade-up-3">
-        <div class="bg-glow" style="background:#d97706"></div>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fcd34d;text-transform:uppercase;margin-bottom:8px">Ventas Fantasma</p>
-        <div class="kpi-val" style="color:#fcd34d" id="kpiFan">0</div>
-        <p style="font-size:10px;color:#64748b;margin-top:4px">Vendió sin stock lógico</p>
+      <div class="kpi-card fu fu3">
+        <div class="kpi-glow" style="background:#d97706"></div>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#fcd34d;text-transform:uppercase;margin-bottom:7px">Ventas Fantasma</p>
+        <div class="kpi-val" style="color:#fcd34d" id="kFan">0</div>
+        <p style="font-size:9px;color:#475569;margin-top:3px">Vendió sin stock</p>
       </div>
-      <div class="kpi-card fade-up fade-up-4" style="box-shadow:0 0 30px rgba(232,114,0,0.12);border-color:rgba(232,114,0,0.25)">
-        <div class="bg-glow" style="background:var(--orange)"></div>
-        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fb923c;text-transform:uppercase;margin-bottom:8px">Oportunidad Perdida</p>
-        <div class="kpi-val" style="color:#fb923c" id="kpiMoney">$0</div>
-        <p style="font-size:10px;color:#64748b;margin-top:4px">Solo BH confirmados</p>
+      <div class="kpi-card fu fu4" style="box-shadow:0 0 28px rgba(232,114,0,.14);border-color:rgba(232,114,0,.28)">
+        <div class="kpi-glow" style="background:var(--orange)"></div>
+        <p style="font-size:9px;font-family:'Space Mono',monospace;color:#fb923c;text-transform:uppercase;margin-bottom:7px">Oportunidad Perdida</p>
+        <div class="kpi-val" style="color:#fb923c" id="kMoney">$0</div>
+        <p style="font-size:9px;color:#475569;margin-top:3px">Solo BH confirmados</p>
       </div>
     </div>
 
     <!-- TABS -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      <button class="tab-btn active" onclick="switchTab('matrix')" id="tab-matrix"><i class="fa-solid fa-table-cells" style="margin-right:6px"></i> Matriz Hora × Tienda</button>
-      <button class="tab-btn" onclick="switchTab('chart')" id="tab-chart"><i class="fa-solid fa-chart-bar" style="margin-right:6px"></i> Panorama Stock</button>
-      <button class="tab-btn" onclick="switchTab('table')" id="tab-table"><i class="fa-solid fa-list" style="margin-right:6px"></i> Detalle por Tienda</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="tab-btn active" onclick="switchTab('matrix')" id="tab-matrix"><i class="fa-solid fa-table-cells" style="margin-right:5px"></i>Matriz Hora × Tienda</button>
+      <button class="tab-btn" onclick="switchTab('chart')" id="tab-chart"><i class="fa-solid fa-chart-bar" style="margin-right:5px"></i>Panorama Stock</button>
+      <button class="tab-btn" onclick="switchTab('table')" id="tab-table"><i class="fa-solid fa-list" style="margin-right:5px"></i>Detalle por Tienda</button>
     </div>
 
-    <!-- VIEW: MATRIX -->
-    <div id="view-matrix" class="card" style="padding:20px">
-      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+    <!-- VIEW MATRIX -->
+    <div id="view-matrix" class="card" style="padding:18px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
         <div>
-          <h3 style="font-weight:700;color:white">Comportamiento Hora × Tienda</h3>
-          <p style="font-size:11px;color:#64748b;margin-top:2px">Cada celda = una snapshot horaria. Click en tienda para detalle completo.</p>
+          <h3 style="font-weight:700;color:white;font-size:15px">Comportamiento Hora × Tienda</h3>
+          <p style="font-size:11px;color:#475569;margin-top:2px">Cada celda = snapshot horaria. Click en tienda o celda para detalle.</p>
         </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px">
-          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(220,38,38,0.75);display:inline-block"></span> BH Confirmado</span>
-          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(220,38,38,0.3);display:inline-block"></span> BH Sospechoso</span>
-          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(217,119,6,0.5);display:inline-block"></span> Venta Fantasma</span>
-          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(5,150,105,0.15);display:inline-block"></span> OK</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;align-items:center">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:rgba(220,38,38,.8);display:inline-block"></span>BH Confirmado</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:rgba(220,38,38,.28);display:inline-block"></span>BH Sospechoso</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:rgba(217,119,6,.55);display:inline-block"></span>Venta Fantasma</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:rgba(5,150,105,.18);display:inline-block"></span>OK</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:2px;background:rgba(255,255,255,.04);display:inline-block"></span>Sin dato</span>
         </div>
       </div>
       <div class="matrix-wrap">
-        <table class="matrix-table" id="matrixTable"></table>
+        <table class="mtable" id="mtable"></table>
       </div>
     </div>
 
-    <!-- VIEW: CHART -->
-    <div id="view-chart" class="card" style="padding:20px;display:none">
-      <h3 style="font-weight:700;color:white;margin-bottom:16px">Panorama de Stock — Última Muestra por Tienda</h3>
-      <div style="overflow-x:auto;padding-bottom:8px">
-        <div style="height:320px;min-width:1200px"><canvas id="mainChart"></canvas></div>
+    <!-- VIEW CHART -->
+    <div id="view-chart" class="card" style="padding:18px;display:none">
+      <h3 style="font-weight:700;color:white;font-size:15px;margin-bottom:14px">Panorama de Stock — Última Muestra por Tienda</h3>
+      <div style="overflow-x:auto;padding-bottom:6px">
+        <div style="height:320px;min-width:1100px"><canvas id="mainChart"></canvas></div>
       </div>
     </div>
 
-    <!-- VIEW: TABLE -->
+    <!-- VIEW TABLE -->
     <div id="view-table" class="card" style="overflow:hidden;display:none">
-      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
         <h3 style="font-weight:700;color:white;font-size:14px">Detalle por Tienda</h3>
-        <input type="text" id="tableSearch" placeholder="Buscar tienda..." oninput="filterTable()" style="padding:6px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;outline:none;width:180px">
+        <input type="text" id="tSearch" placeholder="Buscar tienda..." oninput="filterTbl()" style="padding:6px 11px;border-radius:8px;font-size:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;outline:none;width:170px">
       </div>
       <div style="overflow:auto;max-height:500px">
-        <table style="width:100%;text-align:left;font-size:13px;border-collapse:collapse">
+        <table style="width:100%;text-align:left;font-size:12px;border-collapse:collapse">
           <thead style="position:sticky;top:0;z-index:10;background:var(--navy2)">
-            <tr style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.05)">
-              <th style="padding:12px 20px">Tienda</th>
-              <th style="padding:12px 20px;text-align:center">Stock Actual</th>
-              <th style="padding:12px 20px;text-align:center">Horas BH</th>
-              <th style="padding:12px 20px;text-align:center">Horas Fantasma</th>
-              <th style="padding:12px 20px;text-align:center">Max Consec.</th>
-              <th style="padding:12px 20px;text-align:center">Impacto $</th>
-              <th style="padding:12px 20px">Diagnóstico</th>
+            <tr style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.05)">
+              <th style="padding:11px 18px">Tienda</th>
+              <th style="padding:11px 18px;text-align:center">Stock Actual</th>
+              <th style="padding:11px 18px;text-align:center">Horas BH</th>
+              <th style="padding:11px 18px;text-align:center">H. Fantasma</th>
+              <th style="padding:11px 18px;text-align:center">Max Consec.</th>
+              <th style="padding:11px 18px;text-align:center">Impacto $</th>
+              <th style="padding:11px 18px">Diagnóstico</th>
             </tr>
           </thead>
-          <tbody id="tableBody"></tbody>
+          <tbody id="tBody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- LEYENDA -->
-    <div class="card" style="padding:14px 20px;margin-top:16px;display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:#64748b">
-      <span><strong style="color:white">BH Confirmado:</strong> Stock=0 + Ventas=0 por ≥ N horas consecutivas → venta perdida real con impacto $.</span>
-      <span><strong style="color:white">BH Sospechoso:</strong> Stock=0 + Ventas=0 pero menos del umbral. Monitorear.</span>
-      <span><strong style="color:white">Venta Fantasma:</strong> Inventario lógico en 0 pero sí hubo ventas → error de captura de inventario.</span>
+    <!-- LEGEND -->
+    <div class="card" style="padding:12px 18px;margin-top:12px;display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:#475569">
+      <span><strong style="color:white">BH Confirmado:</strong> Stock=0 + Ventas=0 por ≥ N horas consecutivas → oportunidad perdida real.</span>
+      <span><strong style="color:white">BH Sospechoso:</strong> Mismo patrón pero bajo el umbral. Monitorear.</span>
+      <span><strong style="color:white">Venta Fantasma:</strong> Stock lógico=0 pero sí hubo ventas → error de captura.</span>
     </div>
   </div>
 </div>
 
 <script>
-const WEBHOOK_URL = "https://genaroroustan1.app.n8n.cloud/webhook/analisis-bh";
-let globalData = null;
-let chartInstance = null;
+const WEBHOOK = "https://genaroroustan1.app.n8n.cloud/webhook/analisis-bh";
+let gData = null, gDet = [], chartInst = null;
 
+// Init
 document.getElementById('fechaInput').valueAsDate = new Date(Date.now()-86400000);
 document.getElementById('productSelect').addEventListener('change',e=>{if(e.target.value)document.getElementById('skuInput').value='';});
 document.getElementById('skuInput').addEventListener('input',e=>{if(e.target.value)document.getElementById('productSelect').value='';});
 
+// ── RUN ──────────────────────────────────────────────────────────
 async function runAnalysis(){
-  const sku=document.getElementById('productSelect').value||document.getElementById('skuInput').value;
-  if(!sku){alert("Seleccioná un producto o ingresá un SKU.");return;}
-  document.getElementById('btnLabel').innerText="Procesando...";
-  document.getElementById('btnIcon').style.display='none';
-  document.getElementById('loader').style.display='block';
-  document.getElementById('dashboard').style.display='none';
-  document.getElementById('btnRun').disabled=true;
+  const sku = document.getElementById('productSelect').value || document.getElementById('skuInput').value;
+  if(!sku){alert("Seleccioná un producto o SKU.");return;}
+  setLoading(true);
   try{
-    const params=new URLSearchParams();
-    params.append('fecha',document.getElementById('fechaInput').value);
-    params.append('sku',sku);
-    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
-    if(!res.ok)throw new Error(`HTTP ${res.status}`);
-    const raw=await res.json();
+    const p=new URLSearchParams();
+    p.append('fecha',document.getElementById('fechaInput').value);
+    p.append('sku',sku);
+    const r=await fetch(WEBHOOK,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:p.toString()});
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    const raw=await r.json();
     const data=Array.isArray(raw)?raw[0]:raw;
-    globalData=data;
-    renderDashboard(data);
+    gData=data;
+    render(data);
     document.getElementById('btnExport').style.display='flex';
-  }catch(err){alert("Error: "+err.message);}
-  finally{
-    document.getElementById('btnLabel').innerText="Generar Análisis";
-    document.getElementById('btnIcon').style.display='';
-    document.getElementById('loader').style.display='none';
-    document.getElementById('btnRun').disabled=false;
-  }
+  }catch(e){alert("Error: "+e.message);}
+  finally{setLoading(false);}
 }
 
-function renderDashboard(data){
-  if(!data||!data.analisis_detalle||data.analisis_detalle.length===0){alert("Sin datos para esta fecha/SKU.");return;}
-  document.getElementById('kpiProd').innerText=data.producto||"N/A";
-  document.getElementById('kpiSku').innerText="SKU: "+(data.sku||"—");
-  const det=data.analisis_detalle;
-  document.getElementById('kpiBH').innerText=data.bh_confirmados??det.filter(t=>t.diagnostico==='BLACK_HOLE_CONFIRMADO').length;
-  document.getElementById('kpiBHsusp').innerText=data.bh_sospechosos??det.filter(t=>t.diagnostico==='BH_SOSPECHOSO').length;
-  document.getElementById('kpiFan').innerText=data.ventas_fantasma??det.filter(t=>t.diagnostico==='VENTA_FANTASMA').length;
-  document.getElementById('kpiMoney').innerText="$"+parseFloat(data.monto_perdido_total||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
-  renderMatrix(det);
-  renderChart(det);
-  renderTable(det);
-  document.getElementById('dashboard').style.display='block';
+function setLoading(on){
+  document.getElementById('btnLabel').innerText=on?"Procesando...":"Generar Análisis";
+  document.getElementById('btnIcon').style.display=on?'none':'';
+  document.getElementById('loader').style.display=on?'block':'none';
+  document.getElementById('btnRun').disabled=on;
+  if(on)document.getElementById('dash').style.display='none';
 }
 
-function renderMatrix(detalle){
-  const HORAS=Array.from({length:24},(_,i)=>i);
-  const table=document.getElementById('matrixTable');
-  table.innerHTML='';
-  const thead=document.createElement('thead');
-  const hRow=document.createElement('tr');
-  const corner=document.createElement('th');
-  corner.className='corner row-header col-header';
-  corner.style.fontSize='9px';
-  corner.innerText='TIENDA \\ HORA';
-  hRow.appendChild(corner);
-  HORAS.forEach(h=>{
-    const th=document.createElement('th');
-    th.className='col-header';
-    th.innerText=String(h).padStart(2,'0');
-    hRow.appendChild(th);
+// ── RENDER ───────────────────────────────────────────────────────
+function render(data){
+  if(!data||!data.analisis_detalle||!data.analisis_detalle.length){alert("Sin datos para esta fecha/SKU.");return;}
+  const thr = parseInt(document.getElementById('bhThreshold').value)||1;
+  // Re-evaluar con el umbral del frontend por si el backend usó diferente
+  const det = reEval(data.analisis_detalle, thr);
+  gDet = det;
+
+  // KPIs
+  document.getElementById('kProd').innerText  = data.producto||"N/A";
+  document.getElementById('kSku').innerText   = "SKU: "+(data.sku||"—");
+  const bhc = det.filter(t=>t.diagnostico==='BLACK_HOLE_CONFIRMADO').length;
+  const bhs = det.filter(t=>t.diagnostico==='BH_SOSPECHOSO').length;
+  const fan = det.filter(t=>t.diagnostico==='VENTA_FANTASMA').length;
+  const money = det.reduce((s,t)=>s+(t.impacto_usd||0),0);
+  document.getElementById('kBH').innerText    = bhc;
+  document.getElementById('kBHs').innerText   = bhs;
+  document.getElementById('kFan').innerText   = fan;
+  document.getElementById('kMoney').innerText = "$"+money.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  buildMatrix(det);
+  buildChart(det);
+  buildTable(det);
+  document.getElementById('dash').style.display='block';
+}
+
+// Re-evalúa timeline con el umbral elegido en el frontend
+const PESOS={0:2.82,1:1.52,2:1.3,3:1.08,4:0.22,5:0.22,6:0.87,7:2.82,8:4.34,9:3.47,10:4.99,11:6.72,12:4.12,13:4.34,14:5.21,15:4.77,16:3.9,17:5.21,18:8.89,19:10.85,20:5.21,21:4.99,22:8.03,23:4.12};
+const PU=35;
+
+function reEval(detalle, thr){
+  return detalle.map(t=>{
+    if(!t.timeline||!t.timeline.length) return t;
+    let consec=0, impacto=0;
+    const tl = t.timeline.map(h=>{
+      let estado, hc;
+      if(h.ventas>0 && h.stock===0){
+        estado='VENTA_FANTASMA'; consec=0; hc=0;
+      } else if(h.stock===0 && h.ventas===0){
+        consec++; hc=consec;
+        estado = consec>=thr ? 'BLACK_HOLE_CONFIRMADO' : 'BH_SOSPECHOSO';
+      } else {
+        estado='OK'; consec=0; hc=0;
+      }
+      if(estado==='BLACK_HOLE_CONFIRMADO') impacto+=(PESOS[h.hora]/100)*PU;
+      return {...h, estado, horas_consec:hc};
+    });
+    const hasBHC = tl.some(h=>h.estado==='BLACK_HOLE_CONFIRMADO');
+    const hasBHS = tl.some(h=>h.estado==='BH_SOSPECHOSO');
+    const hasFan = tl.some(h=>h.estado==='VENTA_FANTASMA');
+    const diag = hasBHC?'BLACK_HOLE_CONFIRMADO':hasBHS?'BH_SOSPECHOSO':hasFan?'VENTA_FANTASMA':'OK';
+    const maxC = Math.max(...tl.map(h=>h.horas_consec));
+    return{
+      ...t,
+      timeline:tl,
+      diagnostico:diag,
+      impacto_usd:parseFloat(impacto.toFixed(2)),
+      horas_bh_count:tl.filter(h=>h.estado==='BLACK_HOLE_CONFIRMADO').length,
+      horas_fantasma:tl.filter(h=>h.estado==='VENTA_FANTASMA').length,
+      max_horas_consec:maxC
+    };
+  }).sort((a,b)=>{
+    const o={BLACK_HOLE_CONFIRMADO:0,BH_SOSPECHOSO:1,VENTA_FANTASMA:2,OK:3};
+    return (o[a.diagnostico]??3)-(o[b.diagnostico]??3)||(b.impacto_usd||0)-(a.impacto_usd||0);
   });
-  thead.appendChild(hRow);
-  table.appendChild(thead);
+}
+
+// ── MATRIX ───────────────────────────────────────────────────────
+function buildMatrix(det){
+  const HORAS=Array.from({length:24},(_,i)=>i);
+  const tbl=document.getElementById('mtable');
+  tbl.innerHTML='';
+
+  // Header
+  const thead=document.createElement('thead');
+  const hr=document.createElement('tr');
+  const corner=document.createElement('th');
+  corner.className='corner row-h col-h';corner.style.fontSize='8px';corner.innerText='TIENDA \\ H';
+  hr.appendChild(corner);
+  HORAS.forEach(h=>{
+    const th=document.createElement('th');th.className='col-h';th.innerText=String(h).padStart(2,'0');hr.appendChild(th);
+  });
+  thead.appendChild(hr);tbl.appendChild(thead);
+
+  // Body
   const tbody=document.createElement('tbody');
-  detalle.forEach(tienda=>{
-    if(!tienda.timeline||tienda.timeline.length===0)return;
+  det.forEach(tienda=>{
+    const tl=tienda.timeline||[];
     const tr=document.createElement('tr');
-    const th=document.createElement('th');
-    th.className='row-header';
-    const diagColor=tienda.diagnostico==='BLACK_HOLE_CONFIRMADO'?'#f87171':tienda.diagnostico==='BH_SOSPECHOSO'?'#fca5a5':tienda.diagnostico==='VENTA_FANTASMA'?'#fcd34d':'#34d399';
-    th.innerHTML=`<span style="color:${diagColor};cursor:pointer" onclick="openModal(window.__bhData.find(t=>t.tienda_id=='${tienda.tienda_id}'))">T-${tienda.tienda_id}</span>`;
-    tr.appendChild(th);
-    const horaMap={};
-    (tienda.timeline||[]).forEach(t=>{horaMap[t.hora]=t;});
+
+    // Row label
+    const rh=document.createElement('th');
+    rh.className='row-h';
+    const col=diagColor(tienda.diagnostico);
+    rh.innerHTML=`<span style="color:${col};cursor:pointer;font-size:10px" onclick="openMod(window.__D.find(x=>x.tienda_id==='${tienda.tienda_id}'))">T-${tienda.tienda_id}</span>`;
+    tr.appendChild(rh);
+
+    // Build hour map
+    const hm={};
+    tl.forEach(t=>{ hm[t.hora]=t; });
+
     HORAS.forEach(h=>{
       const td=document.createElement('td');
-      const t=horaMap[h];
-      if(!t){td.className='matrix-cell cell-empty';td.innerText='·';}
-      else{
-        let cls,label;
-        if(t.estado==='BLACK_HOLE_CONFIRMADO'){cls='cell-bh-conf';label='BH';}
-        else if(t.estado==='BH_SOSPECHOSO'){cls='cell-bh-susp';label=t.horas_consec||'?';}
-        else if(t.estado==='VENTA_FANTASMA'){cls='cell-fantasma';label='VF';}
-        else{cls='cell-ok';label=t.stock;}
-        td.className=`matrix-cell ${cls}`;
-        td.innerText=label;
-        const tip=`T-${tienda.tienda_id} | ${String(h).padStart(2,'0')}:00\nStock: ${t.stock} | Ventas: ${t.ventas}\nEstado: ${t.estado}`;
-        td.addEventListener('mouseenter',e=>{showTooltip(e,tip);});
-        td.addEventListener('mouseleave',hideTooltip);
+      const snap=hm[h];
+      if(!snap){
+        td.className='mcell c-nd';td.innerText='·';
+      } else {
+        const {cls,lbl}=cellStyle(snap);
+        td.className=`mcell ${cls}`;td.innerText=lbl;
+        const tipTxt=`T-${tienda.tienda_id} | ${String(h).padStart(2,'0')}:00\nStock: ${snap.stock}  Ventas: ${snap.ventas}\nH.Consec: ${snap.horas_consec||0}  →  ${snap.estado}`;
+        td.onmouseenter=e=>showTip(e,tipTxt);
+        td.onmouseleave=hideTip;
       }
-      td.onclick=()=>openModal(tienda);
+      td.onclick=()=>openMod(tienda);
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   });
-  table.appendChild(tbody);
-  window.__bhData=detalle;
+  tbl.appendChild(tbody);
+  window.__D=det;
 }
 
-function renderChart(detalle){
-  const sorted=[...detalle].sort((a,b)=>Number(a.tienda_id)-Number(b.tienda_id));
+function cellStyle(snap){
+  if(snap.estado==='BLACK_HOLE_CONFIRMADO') return{cls:'c-bhc',lbl:'BH'};
+  if(snap.estado==='BH_SOSPECHOSO')         return{cls:'c-bhs',lbl:snap.horas_consec||'?'};
+  if(snap.estado==='VENTA_FANTASMA')        return{cls:'c-fan',lbl:'VF'};
+  return{cls:'c-ok',lbl:snap.stock};
+}
+
+function diagColor(d){
+  if(d==='BLACK_HOLE_CONFIRMADO')return'#f87171';
+  if(d==='BH_SOSPECHOSO')return'#fca5a5';
+  if(d==='VENTA_FANTASMA')return'#fcd34d';
+  return'#34d399';
+}
+
+// ── CHART ────────────────────────────────────────────────────────
+function buildChart(det){
+  const sorted=[...det].sort((a,b)=>Number(a.tienda_id)-Number(b.tienda_id));
   const ctx=document.getElementById('mainChart').getContext('2d');
-  if(chartInstance)chartInstance.destroy();
-  chartInstance=new Chart(ctx,{
+  if(chartInst)chartInst.destroy();
+
+  const colors=sorted.map(d=>{
+    if(d.diagnostico==='BLACK_HOLE_CONFIRMADO')return'rgba(220,38,38,.9)';
+    if(d.diagnostico==='BH_SOSPECHOSO')return'rgba(248,113,113,.6)';
+    if(d.diagnostico==='VENTA_FANTASMA')return'rgba(217,119,6,.85)';
+    return'rgba(99,179,140,.75)';
+  });
+
+  chartInst=new Chart(ctx,{
     type:'bar',
     data:{
       labels:sorted.map(d=>'T-'+d.tienda_id),
-      datasets:[{label:'Stock Actual',data:sorted.map(d=>d.stock_actual),backgroundColor:sorted.map(d=>d.diagnostico==='BLACK_HOLE_CONFIRMADO'?'#dc2626':d.diagnostico==='BH_SOSPECHOSO'?'#f87171':d.diagnostico==='VENTA_FANTASMA'?'#d97706':'#11284a'),borderRadius:3,barPercentage:.7}]
+      datasets:[{
+        label:'Stock Actual',
+        data:sorted.map(d=>d.stock_actual),
+        backgroundColor:colors,
+        borderColor:colors.map(c=>c.replace(/[\d.]+\)$/,'1)')),
+        borderWidth:1,
+        borderRadius:4,
+        barPercentage:.75
+      }]
     },
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:9},autoSkip:false,maxRotation:90}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#64748b',font:{size:10}},beginAtZero:true}}}
-  });
-}
-
-function renderTable(detalle){
-  const tbody=document.getElementById('tableBody');
-  tbody.innerHTML='';
-  detalle.forEach(d=>{
-    const tr=document.createElement('tr');
-    tr.style.cssText='border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s';
-    tr.onmouseenter=()=>tr.style.background='rgba(255,255,255,.03)';
-    tr.onmouseleave=()=>tr.style.background='';
-    tr.innerHTML=`
-      <td style="padding:12px 20px;font-weight:600;color:white">Tienda ${d.tienda_id}</td>
-      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${d.stock_actual===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${d.stock_actual}</td>
-      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_bh_count||0)>0?'color:#f87171':'color:#64748b'}">${d.horas_bh_count||0}</td>
-      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_fantasma||0)>0?'color:#fcd34d':'color:#64748b'}">${d.horas_fantasma||0}</td>
-      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;color:#94a3b8">${d.max_horas_consec||0}h</td>
-      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.impacto_usd||0)>0?'color:#fb923c;font-weight:700':'color:#475569'}">$${parseFloat(d.impacto_usd||0).toFixed(2)}</td>
-      <td style="padding:12px 20px">${badgeFor(d.diagnostico)}</td>
-    `;
-    tr.onclick=()=>openModal(d);
-    tbody.appendChild(tr);
-  });
-}
-
-function badgeFor(diag){
-  if(diag==='BLACK_HOLE_CONFIRMADO')return`<span class="badge badge-bh"><i class="fa-solid fa-circle-dot pulse-red"></i> BH CONFIRMADO</span>`;
-  if(diag==='BH_SOSPECHOSO')return`<span class="badge badge-susp"><i class="fa-solid fa-triangle-exclamation"></i> SOSPECHOSO</span>`;
-  if(diag==='VENTA_FANTASMA')return`<span class="badge badge-fan"><i class="fa-solid fa-ghost"></i> FANTASMA</span>`;
-  return`<span class="badge badge-ok"><i class="fa-solid fa-check"></i> OK</span>`;
-}
-
-function filterTable(){
-  const q=document.getElementById('tableSearch').value.toLowerCase();
-  document.querySelectorAll('#tableBody tr').forEach(tr=>{tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none';});
-}
-
-function openModal(tienda){
-  if(!tienda)return;
-  document.getElementById('modal-title').innerText=`Tienda ${tienda.tienda_id}`;
-  document.getElementById('modal-subtitle').innerHTML=`${badgeFor(tienda.diagnostico)} &nbsp; Stock actual: <strong>${tienda.stock_actual}</strong> &nbsp; Impacto: <strong style="color:var(--orange)">$${parseFloat(tienda.impacto_usd||0).toFixed(2)}</strong>`;
-  const tl=tienda.timeline||[];
-  const body=document.getElementById('modal-body');
-  let tlHTML=`<div style="margin-bottom:20px">
-    <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:8px">Timeline 24h</p>
-    <div style="display:flex;gap:2px;height:36px;border-radius:6px;overflow:hidden">`;
-  Array.from({length:24},(_,h)=>h).forEach(h=>{
-    const t=tl.find(x=>x.hora===h);
-    if(!t){tlHTML+=`<div class="tl-seg cell-empty" title="${h}:00 — sin dato" style="flex:1;min-width:0">·</div>`;}
-    else{
-      const cls=t.estado==='BLACK_HOLE_CONFIRMADO'?'cell-bh-conf':t.estado==='BH_SOSPECHOSO'?'cell-bh-susp':t.estado==='VENTA_FANTASMA'?'cell-fantasma':'cell-ok';
-      const lbl=t.estado==='BLACK_HOLE_CONFIRMADO'?'BH':t.estado==='BH_SOSPECHOSO'?(t.horas_consec||'?'):t.estado==='VENTA_FANTASMA'?'VF':t.stock;
-      tlHTML+=`<div class="tl-seg ${cls}" title="${h}:00 | Stock:${t.stock} | Ventas:${t.ventas}" style="flex:1;min-width:0">${lbl}</div>`;
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#0d1e35',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+          titleColor:'#e2e8f0',bodyColor:'#94a3b8',padding:10,
+          callbacks:{
+            afterBody:(items)=>{
+              const d=sorted[items[0].dataIndex];
+              return`Diagnóstico: ${d.diagnostico}\nImpacto: $${d.impacto_usd||0}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#475569',font:{size:9},autoSkip:false,maxRotation:90}},
+        y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#475569',font:{size:10}},beginAtZero:true}
+      }
     }
   });
-  tlHTML+=`</div>
-    <div style="display:flex;justify-content:space-between;font-size:9px;font-family:'Space Mono',monospace;color:#475569;margin-top:4px;padding:0 2px">
-      ${Array.from({length:7},(_,i)=>i*4).map(h=>`<span>${String(h).padStart(2,'0')}h</span>`).join('')}
-    </div></div>`;
-  let tableHTML=`<div style="overflow:auto;max-height:260px">
-    <table style="width:100%;font-size:12px;border-collapse:collapse">
-      <thead><tr style="font-size:9px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.1)">
-        <th style="padding:8px 12px 8px 0;text-align:left">Hora</th>
-        <th style="padding:8px 12px;text-align:center">Stock</th>
-        <th style="padding:8px 12px;text-align:center">Ventas</th>
-        <th style="padding:8px 12px;text-align:center">H.Consec</th>
-        <th style="padding:8px 12px;text-align:left">Estado</th>
-      </tr></thead><tbody>`;
-  tl.forEach(t=>{
-    const stMap={'BLACK_HOLE_CONFIRMADO':'<span style="color:#f87171;font-weight:700">⬤ BH CONFIRMADO</span>','BH_SOSPECHOSO':'<span style="color:#fca5a5">△ SOSPECHOSO</span>','VENTA_FANTASMA':'<span style="color:#fcd34d">◈ VTA FANTASMA</span>','OK':'<span style="color:#34d399">✓ OK</span>'};
-    tableHTML+=`<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
-      <td style="padding:6px 12px 6px 0;font-family:'Space Mono',monospace;color:#94a3b8">${String(t.hora).padStart(2,'0')}:00</td>
-      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;${t.stock===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${t.stock}</td>
-      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;${t.ventas>0?'color:#34d399':'color:#475569'}">${t.ventas}</td>
-      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;color:#64748b">${t.horas_consec||0}</td>
-      <td style="padding:6px 12px">${stMap[t.estado]||t.estado}</td>
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+function buildTable(det){
+  const tb=document.getElementById('tBody');
+  tb.innerHTML='';
+  det.forEach(d=>{
+    const tr=document.createElement('tr');
+    tr.style.cssText='border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .12s';
+    tr.onmouseenter=()=>tr.style.background='rgba(255,255,255,.03)';
+    tr.onmouseleave=()=>tr.style.background='';
+    tr.onclick=()=>openMod(d);
+    tr.innerHTML=`
+      <td style="padding:11px 18px;font-weight:600;color:white">Tienda ${d.tienda_id}</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${d.stock_actual===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${d.stock_actual}</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_bh_count||0)>0?'color:#f87171':'color:#475569'}">${d.horas_bh_count||0}</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_fantasma||0)>0?'color:#fcd34d':'color:#475569'}">${d.horas_fantasma||0}</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;color:#64748b">${d.max_horas_consec||0}h</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.impacto_usd||0)>0?'color:#fb923c;font-weight:700':'color:#334155'}">$${parseFloat(d.impacto_usd||0).toFixed(2)}</td>
+      <td style="padding:11px 18px">${mkBadge(d.diagnostico)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function filterTbl(){
+  const q=document.getElementById('tSearch').value.toLowerCase();
+  document.querySelectorAll('#tBody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none');
+}
+
+function mkBadge(d){
+  if(d==='BLACK_HOLE_CONFIRMADO')return`<span class="badge b-bhc"><i class="fa-solid fa-circle-dot pulse-r"></i>BH CONFIRMADO</span>`;
+  if(d==='BH_SOSPECHOSO')return`<span class="badge b-bhs"><i class="fa-solid fa-triangle-exclamation"></i>SOSPECHOSO</span>`;
+  if(d==='VENTA_FANTASMA')return`<span class="badge b-fan"><i class="fa-solid fa-ghost"></i>FANTASMA</span>`;
+  return`<span class="badge b-ok"><i class="fa-solid fa-check"></i>OK</span>`;
+}
+
+// ── MODAL ────────────────────────────────────────────────────────
+function openMod(tienda){
+  if(!tienda)return;
+  document.getElementById('m-title').innerText=`Tienda ${tienda.tienda_id}`;
+  document.getElementById('m-sub').innerHTML=`${mkBadge(tienda.diagnostico)}<span style="color:#64748b;font-size:12px">Stock: <strong style="color:white">${tienda.stock_actual}</strong></span><span style="color:#64748b;font-size:12px">Impacto: <strong style="color:var(--orange)">$${parseFloat(tienda.impacto_usd||0).toFixed(2)}</strong></span>`;
+  const tl=tienda.timeline||[];
+  let html='';
+
+  // Timeline bar
+  html+=`<p style="font-size:9px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;margin-bottom:7px">TIMELINE 24H</p>
+  <div style="display:flex;gap:2px;height:34px;border-radius:5px;overflow:hidden;margin-bottom:4px">`;
+  for(let h=0;h<24;h++){
+    const s=tl.find(x=>x.hora===h);
+    if(!s){html+=`<div class="tl-seg c-nd" title="${h}:00 sin dato">·</div>`;}
+    else{
+      const{cls,lbl}=cellStyle(s);
+      html+=`<div class="tl-seg ${cls}" title="${h}:00 | Stock:${s.stock} Ventas:${s.ventas}">${lbl}</div>`;
+    }
+  }
+  html+=`</div>
+  <div style="display:flex;justify-content:space-between;font-size:8px;font-family:'Space Mono',monospace;color:#334155;margin-bottom:18px;padding:0 1px">
+    ${[0,4,8,12,16,20,23].map(h=>`<span>${String(h).padStart(2,'0')}h</span>`).join('')}
+  </div>`;
+
+  // Detail table
+  html+=`<div style="overflow:auto;max-height:280px">
+  <table style="width:100%;font-size:11px;border-collapse:collapse">
+    <thead><tr style="font-size:8px;font-family:'Space Mono',monospace;color:#475569;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.08)">
+      <th style="padding:7px 10px 7px 0;text-align:left">Hora</th>
+      <th style="padding:7px 10px;text-align:center">Stock</th>
+      <th style="padding:7px 10px;text-align:center">Ventas</th>
+      <th style="padding:7px 10px;text-align:center">H.Consec</th>
+      <th style="padding:7px 10px;text-align:left">Estado</th>
+    </tr></thead><tbody>`;
+
+  tl.forEach(s=>{
+    const stMap={
+      'BLACK_HOLE_CONFIRMADO':'<span style="color:#f87171;font-weight:700">⬤ BH CONFIRMADO</span>',
+      'BH_SOSPECHOSO':'<span style="color:#fca5a5">△ SOSPECHOSO</span>',
+      'VENTA_FANTASMA':'<span style="color:#fcd34d">◈ VTA FANTASMA</span>',
+      'OK':'<span style="color:#34d399">✓ OK</span>'
+    };
+    html+=`<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+      <td style="padding:5px 10px 5px 0;font-family:'Space Mono',monospace;color:#64748b">${String(s.hora).padStart(2,'0')}:00</td>
+      <td style="padding:5px 10px;text-align:center;font-family:'Space Mono',monospace;${s.stock===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${s.stock}</td>
+      <td style="padding:5px 10px;text-align:center;font-family:'Space Mono',monospace;${s.ventas>0?'color:#34d399':'color:#334155'}">${s.ventas}</td>
+      <td style="padding:5px 10px;text-align:center;font-family:'Space Mono',monospace;color:#475569">${s.horas_consec||0}</td>
+      <td style="padding:5px 10px">${stMap[s.estado]||s.estado}</td>
     </tr>`;
   });
-  tableHTML+=`</tbody></table></div>`;
-  body.innerHTML=tlHTML+tableHTML;
-  document.getElementById('modal-overlay').classList.add('open');
+  html+=`</tbody></table></div>`;
+  document.getElementById('m-body').innerHTML=html;
+  document.getElementById('modal-bg').classList.add('open');
 }
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
-document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+function closeMod(){document.getElementById('modal-bg').classList.remove('open');}
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMod();});
 
+// ── TABS ─────────────────────────────────────────────────────────
 function switchTab(tab){
   ['matrix','chart','table'].forEach(t=>{
     document.getElementById('view-'+t).style.display=t===tab?'block':'none';
-    const btn=document.getElementById('tab-'+t);
-    btn.classList.toggle('active',t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
 }
 
-function showTooltip(e,text){
-  const el=document.getElementById('tooltip');
-  el.innerText=text;
-  el.style.display='block';
-  el.style.left=(e.clientX+14)+'px';
-  el.style.top=(e.clientY-10)+'px';
-}
-function hideTooltip(){document.getElementById('tooltip').style.display='none';}
-document.addEventListener('mousemove',e=>{
-  const el=document.getElementById('tooltip');
-  if(el.style.display==='block'){el.style.left=(e.clientX+14)+'px';el.style.top=(e.clientY-10)+'px';}
-});
+// ── TOOLTIP ──────────────────────────────────────────────────────
+function showTip(e,txt){const el=document.getElementById('tip');el.innerText=txt;el.style.display='block';el.style.left=(e.clientX+13)+'px';el.style.top=(e.clientY-8)+'px';}
+function hideTip(){document.getElementById('tip').style.display='none';}
+document.addEventListener('mousemove',e=>{const el=document.getElementById('tip');if(el.style.display==='block'){el.style.left=(e.clientX+13)+'px';el.style.top=(e.clientY-8)+'px';}});
 
-function exportToCSV(){
-  if(!globalData?.analisis_detalle)return;
-  let csv="Tienda,Stock_Actual,Horas_BH,Horas_Fantasma,Max_Consecutivas,Impacto_USD,Diagnostico\n";
-  globalData.analisis_detalle.forEach(d=>{csv+=`${d.tienda_id},${d.stock_actual},${d.horas_bh_count||0},${d.horas_fantasma||0},${d.max_horas_consec||0},${d.impacto_usd||0},${d.diagnostico}\n`;});
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+// ── EXPORT ───────────────────────────────────────────────────────
+function doExport(){
+  if(!gDet.length)return;
+  let csv="Tienda,Stock_Actual,Horas_BH,H_Fantasma,Max_Consec,Impacto_USD,Diagnostico\n";
+  gDet.forEach(d=>csv+=`${d.tienda_id},${d.stock_actual},${d.horas_bh_count||0},${d.horas_fantasma||0},${d.max_horas_consec||0},${d.impacto_usd||0},${d.diagnostico}\n`);
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
   a.download=`AMPM_BH_${document.getElementById('fechaInput').value}.csv`;
   a.click();
 }
