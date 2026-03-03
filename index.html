@@ -1,323 +1,472 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMPM Operations | Availability Report</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { ampm: { blue: '#11284a', orange: '#e87200' } } } }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .grid-heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 6px; }
-        .heatmap-cell { height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
-        .heatmap-cell:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-color: #94a3b8; }
-        .st-ok   { background-color: #f0fdf4; color: #166534; border-color: #dcfce7; }
-        .st-warn { background-color: #fefce8; color: #854d0e; border-color: #fef08a; }
-        .st-crit { background-color: #fef2f2; color: #991b1b; border-color: #fecaca; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMPM | Black Holes Intelligence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root{--navy:#0a1628;--navy2:#111f38;--orange:#e87200;--red-bh:#dc2626;--border:rgba(255,255,255,0.07)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:#e2e8f0;min-height:100vh}
+.mono{font-family:'Space Mono',monospace}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:14px}
+.kpi-card{position:relative;overflow:hidden;padding:22px 24px;border-radius:14px;border:1px solid var(--border);background:var(--navy2);transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card .bg-glow{position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;opacity:.08;filter:blur(30px)}
+.kpi-val{font-family:'Space Mono',monospace;font-size:2.4rem;font-weight:700;line-height:1}
+.matrix-wrap{overflow:auto;max-height:520px}
+.matrix-table{border-collapse:separate;border-spacing:3px;font-size:11px}
+.matrix-table th{position:sticky;background:var(--navy2);z-index:2;font-family:'Space Mono',monospace;font-size:10px;color:#94a3b8;font-weight:400;padding:4px 6px;white-space:nowrap}
+.matrix-table th.col-header{top:0;text-align:center;min-width:32px}
+.matrix-table th.row-header{left:0;text-align:right;padding-right:10px;min-width:160px;z-index:3}
+.matrix-table th.corner{top:0;left:0;z-index:4}
+.matrix-cell{width:32px;height:26px;text-align:center;vertical-align:middle;border-radius:4px;cursor:pointer;transition:transform .15s,filter .15s;font-family:'Space Mono',monospace;font-size:10px;font-weight:700}
+.matrix-cell:hover{transform:scale(1.3);filter:brightness(1.3);z-index:10;position:relative}
+.cell-ok{background:rgba(5,150,105,0.15);color:#34d399}
+.cell-bh-conf{background:rgba(220,38,38,0.75);color:#fff}
+.cell-bh-susp{background:rgba(220,38,38,0.3);color:#fca5a5}
+.cell-fantasma{background:rgba(217,119,6,0.5);color:#fcd34d}
+.cell-empty{background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.15)}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+#modal-overlay.open{display:flex}
+#modal-box{background:var(--navy2);border:1px solid rgba(255,255,255,.1);border-radius:18px;width:90%;max-width:720px;max-height:85vh;overflow-y:auto;padding:28px}
+.tl-seg{flex:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Space Mono',monospace;cursor:pointer;transition:filter .15s;border-radius:3px}
+.tl-seg:hover{filter:brightness(1.4)}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.4}}
+.pulse-red{animation:pulse-red 1.5s ease-in-out infinite}
+.tab-btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:#94a3b8;background:transparent;border:none}
+.tab-btn.active{background:var(--orange);color:#fff}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;font-family:'Space Mono',monospace}
+.badge-bh{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)}
+.badge-susp{background:rgba(220,38,38,.1);color:#fca5a5;border:1px solid rgba(220,38,38,.2)}
+.badge-fan{background:rgba(217,119,6,.2);color:#fcd34d;border:1px solid rgba(217,119,6,.3)}
+.badge-ok{background:rgba(5,150,105,.15);color:#34d399;border:1px solid rgba(5,150,105,.25)}
+.scanline{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.015) 2px,rgba(255,255,255,.015) 4px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease both}
+.fade-up-1{animation-delay:.05s}.fade-up-2{animation-delay:.1s}.fade-up-3{animation-delay:.15s}.fade-up-4{animation-delay:.2s}
+.tooltip{position:fixed;background:#0f1f38;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;font-size:11px;pointer-events:none;z-index:999;white-space:pre;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+input,select{color:#e2e8f0}
+</style>
 </head>
-<body class="p-6 min-h-screen">
-<div class="max-w-[1400px] mx-auto space-y-6">
+<body>
 
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="h-12 w-auto bg-ampm-blue rounded-lg flex items-center justify-center px-4 py-2 shadow-inner">
-                <img src="Logo AMPM Blanco.png" alt="AMPM Logo" class="h-5 object-contain">
-            </div>
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">AMPM - Análisis de Black Holes</h1>
-                <p class="text-sm text-slate-500 font-medium">Detección de Anomalías en Tiempo Real</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3 mt-4 md:mt-0">
-            <button id="btnExcel" onclick="exportToExcel()" class="hidden h-12 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-sm flex items-center gap-2 shadow-sm transition-colors">
-                <i class="fa-solid fa-file-csv text-lg"></i> Exportar Data
-            </button>
-        </div>
-    </header>
+<div id="tooltip" class="tooltip" style="display:none"></div>
 
-    <div class="card p-1">
-        <div class="flex flex-col md:flex-row gap-4 p-4 items-end bg-slate-50/50 rounded-lg">
-            <div class="w-full md:w-48">
-                <label for="fechaInput" class="text-xs font-bold text-slate-500 uppercase ml-1">Fecha Corte</label>
-                <input type="date" id="fechaInput" class="w-full mt-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-ampm-blue">
-            </div>
-            <div class="w-full md:flex-1">
-                <label for="productSelect" class="text-xs font-bold text-slate-500 uppercase ml-1">SKU Producto</label>
-                <div class="flex flex-col sm:flex-row items-center gap-2 mt-1">
-                    <select id="productSelect" title="Seleccionar producto" aria-label="Seleccionar producto" class="w-full sm:flex-1 px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 outline-none focus:border-ampm-blue">
-                        <option value="">Seleccionar producto de la lista...</option>
-                        <option value="12345">Hielo 5 lbs</option>
-                        <option value="24474006818">Gatorade Azul 500ml</option>
-                        <option value="54321">Coca-Cola 3L</option>
-                    </select>
-                    <span class="text-slate-400 text-xs font-bold px-1 hidden sm:block">Ó</span>
-                    <div class="relative w-full sm:w-48">
-                        <i class="fa-solid fa-tag absolute left-3 top-3.5 text-slate-400 text-sm"></i>
-                        <input type="text" id="skuInput" placeholder="Escribir SKU..." class="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm outline-none focus:border-ampm-blue">
-                    </div>
-                </div>
-            </div>
-            <button onclick="runAnalysis()" class="w-full md:w-auto bg-ampm-orange text-white hover:opacity-90 h-[42px] px-6 rounded-lg font-semibold shadow-sm transition-all whitespace-nowrap flex items-center justify-center gap-2">
-                <span id="btnLabel">Generar Análisis Black Holes</span>
-                <i id="btnIcon" class="fa-solid fa-bolt"></i>
-                <div id="loader" class="hidden h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            </button>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <p style="font-family:'Space Mono',monospace;font-size:10px;color:#64748b;text-transform:uppercase;margin-bottom:4px">DETALLE TIENDA</p>
+        <h2 style="font-size:1.25rem;font-weight:700" id="modal-title">—</h2>
+        <p style="font-size:.85rem;color:#94a3b8;margin-top:4px" id="modal-subtitle">—</p>
+      </div>
+      <button onclick="closeModal()" style="color:#64748b;font-size:1.25rem;background:none;border:none;cursor:pointer">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div style="max-width:1500px;margin:0 auto;padding:24px 16px" class="space-y-5">
+
+  <!-- HEADER -->
+  <header class="card scanline" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="height:42px;width:42px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center">
+        <i class="fa-solid fa-circle-dot" style="color:white;font-size:1.2rem"></i>
+      </div>
+      <div>
+        <h1 style="font-size:1.3rem;font-weight:700;letter-spacing:-.02em">AMPM <span style="color:var(--orange)">Black Holes</span> Intelligence</h1>
+        <p style="font-size:10px;color:#64748b;font-family:'Space Mono',monospace">DETECCIÓN DE ANOMALÍAS · ANÁLISIS HORA×TIENDA</p>
+      </div>
+    </div>
+    <button id="btnExport" onclick="exportToCSV()" style="display:none;align-items:center;gap:8px;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;color:white;background:#059669;border:none;cursor:pointer">
+      <i class="fa-solid fa-file-csv"></i> Exportar CSV
+    </button>
+  </header>
+
+  <!-- CONTROLS -->
+  <div class="card" style="padding:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+      <div>
+        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">Fecha Corte</div>
+        <input type="date" id="fechaInput" style="background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;width:160px">
+      </div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">Producto / SKU</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="productSelect" style="flex:1;min-width:180px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none">
+            <option value="">Seleccionar producto...</option>
+            <option value="12345">Hielo 5 lbs</option>
+            <option value="24474006818">Gatorade Azul 500ml</option>
+            <option value="54321">Coca-Cola 3L</option>
+          </select>
+          <span style="color:#475569;font-size:11px;font-family:'Space Mono',monospace">ó</span>
+          <input type="text" id="skuInput" placeholder="SKU manual..." style="width:150px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none">
         </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:4px">BH si ≥ N horas</div>
+        <input type="number" id="bhThreshold" value="2" min="1" max="12" style="width:70px;background:#0a1628;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;font-size:13px;outline:none;text-align:center">
+      </div>
+      <button onclick="runAnalysis()" id="btnRun" style="display:flex;align-items:center;gap:8px;padding:10px 24px;border-radius:8px;font-weight:700;color:white;font-size:13px;background:var(--orange);border:none;cursor:pointer;white-space:nowrap;transition:opacity .2s">
+        <span id="btnLabel">Generar Análisis</span>
+        <i id="btnIcon" class="fa-solid fa-bolt"></i>
+        <div id="loader" class="spin" style="display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" style="display:none">
+
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+      <div class="kpi-card fade-up fade-up-1">
+        <div class="bg-glow" style="background:var(--orange)"></div>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:8px">Producto</p>
+        <p style="font-size:1rem;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="kpiProd">—</p>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;margin-top:4px" id="kpiSku">—</p>
+      </div>
+      <div class="kpi-card fade-up fade-up-2" style="box-shadow:0 0 30px rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.25)">
+        <div class="bg-glow" style="background:#dc2626"></div>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#f87171;text-transform:uppercase;margin-bottom:8px">Black Holes</p>
+        <div class="kpi-val" style="color:#f87171" id="kpiBH">0</div>
+        <p style="font-size:10px;color:#64748b;margin-top:4px">Tiendas confirmadas</p>
+      </div>
+      <div class="kpi-card fade-up fade-up-2">
+        <div class="bg-glow" style="background:#dc2626;opacity:.05"></div>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fca5a5;text-transform:uppercase;margin-bottom:8px;opacity:.7">BH Sospechosos</p>
+        <div class="kpi-val" style="color:#fca5a5;opacity:.7" id="kpiBHsusp">0</div>
+        <p style="font-size:10px;color:#64748b;margin-top:4px">&lt; umbral horas</p>
+      </div>
+      <div class="kpi-card fade-up fade-up-3">
+        <div class="bg-glow" style="background:#d97706"></div>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fcd34d;text-transform:uppercase;margin-bottom:8px">Ventas Fantasma</p>
+        <div class="kpi-val" style="color:#fcd34d" id="kpiFan">0</div>
+        <p style="font-size:10px;color:#64748b;margin-top:4px">Vendió sin stock lógico</p>
+      </div>
+      <div class="kpi-card fade-up fade-up-4" style="box-shadow:0 0 30px rgba(232,114,0,0.12);border-color:rgba(232,114,0,0.25)">
+        <div class="bg-glow" style="background:var(--orange)"></div>
+        <p style="font-size:10px;font-family:'Space Mono',monospace;color:#fb923c;text-transform:uppercase;margin-bottom:8px">Oportunidad Perdida</p>
+        <div class="kpi-val" style="color:#fb923c" id="kpiMoney">$0</div>
+        <p style="font-size:10px;color:#64748b;margin-top:4px">Solo BH confirmados</p>
+      </div>
     </div>
 
-    <div id="dashboardView" class="hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="card p-5 border-l-[6px] border-ampm-blue">
-                <p class="text-xs font-bold text-slate-400 uppercase">Producto</p>
-                <h3 class="text-lg font-bold text-slate-800 truncate mt-1" id="kpiProd">...</h3>
-                <p class="text-xs font-mono text-slate-500" id="kpiSku">...</p>
-            </div>
-            <div class="card p-5 border-l-[6px] border-red-500 bg-red-50/30">
-                <div class="flex justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-red-600 uppercase">Black Holes</p>
-                        <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiBH">0</h3>
-                        <p class="text-xs text-red-600/70 font-medium mt-1">Tiendas Críticas</p>
-                    </div>
-                    <div class="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center text-red-500"><i class="fa-solid fa-circle-exclamation"></i></div>
-                </div>
-            </div>
-            <div class="card p-5 border-l-[6px] border-amber-400 bg-amber-50/30">
-                <div class="flex justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-amber-600 uppercase">Ventas Fantasma</p>
-                        <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiFan">0</h3>
-                        <p class="text-xs text-amber-600/70 font-medium mt-1">Inv. Lógico 0</p>
-                    </div>
-                    <div class="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-500"><i class="fa-solid fa-ghost"></i></div>
-                </div>
-            </div>
-            <div class="card p-5 border-l-[6px] border-slate-400">
-                <div class="flex justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase">Oportunidad Perdida</p>
-                        <h3 class="text-3xl font-extrabold text-slate-800 mt-1" id="kpiMoney">$0</h3>
-                        <p class="text-xs text-slate-400 font-medium mt-1">Est. Turno Actual</p>
-                    </div>
-                    <div class="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500"><i class="fa-solid fa-sack-dollar"></i></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div class="xl:col-span-2 card p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800">Panorama de Stock (Todas las Tiendas)</h3>
-                    <div class="flex gap-2">
-                        <span class="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400"><div class="w-2 h-2 bg-ampm-blue rounded-full"></div> Stock OK</span>
-                        <span class="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400"><div class="w-2 h-2 bg-red-500 rounded-full"></div> Crítico</span>
-                    </div>
-                </div>
-                <div class="w-full overflow-x-auto pb-2">
-                    <div class="h-[300px] w-[1500px]"><canvas id="mainChart"></canvas></div>
-                </div>
-            </div>
-            <div class="card p-6">
-                <h3 class="font-bold text-slate-800 mb-2">Mapa de Calor (Snapshot)</h3>
-                <p class="text-xs text-slate-500 mb-4">Visualización completa de la red de tiendas.</p>
-                <div id="heatmapContainer" class="grid-heatmap max-h-[300px] overflow-y-auto pr-2"></div>
-                <div class="mt-4 pt-4 border-t border-slate-100 flex gap-4 text-xs justify-center">
-                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-red-100 border border-red-200 rounded-sm"></div><span class="text-slate-600">Black Hole</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-yellow-100 border border-yellow-200 rounded-sm"></div><span class="text-slate-600">Fantasma</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 bg-green-100 border border-green-200 rounded-sm"></div><span class="text-slate-600">Operativo</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <h3 class="font-bold text-slate-800 text-sm">Detalle de Tiendas (Data Cruda)</h3>
-            </div>
-            <div class="overflow-x-auto max-h-[400px]">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0 z-10">
-                        <tr>
-                            <th class="p-4 border-b">ID Tienda</th>
-                            <th class="p-4 border-b text-center">Stock Físico</th>
-                            <th class="p-4 border-b text-center">Ventas (Snapshot)</th>
-                            <th class="p-4 border-b">Diagnóstico</th>
-                            <th class="p-4 border-b text-center">Hora Muestra</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-600"></tbody>
-                </table>
-            </div>
-        </div>
+    <!-- TABS -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="tab-btn active" onclick="switchTab('matrix')" id="tab-matrix"><i class="fa-solid fa-table-cells" style="margin-right:6px"></i> Matriz Hora × Tienda</button>
+      <button class="tab-btn" onclick="switchTab('chart')" id="tab-chart"><i class="fa-solid fa-chart-bar" style="margin-right:6px"></i> Panorama Stock</button>
+      <button class="tab-btn" onclick="switchTab('table')" id="tab-table"><i class="fa-solid fa-list" style="margin-right:6px"></i> Detalle por Tienda</button>
     </div>
+
+    <!-- VIEW: MATRIX -->
+    <div id="view-matrix" class="card" style="padding:20px">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <div>
+          <h3 style="font-weight:700;color:white">Comportamiento Hora × Tienda</h3>
+          <p style="font-size:11px;color:#64748b;margin-top:2px">Cada celda = una snapshot horaria. Click en tienda para detalle completo.</p>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(220,38,38,0.75);display:inline-block"></span> BH Confirmado</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(220,38,38,0.3);display:inline-block"></span> BH Sospechoso</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(217,119,6,0.5);display:inline-block"></span> Venta Fantasma</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(5,150,105,0.15);display:inline-block"></span> OK</span>
+        </div>
+      </div>
+      <div class="matrix-wrap">
+        <table class="matrix-table" id="matrixTable"></table>
+      </div>
+    </div>
+
+    <!-- VIEW: CHART -->
+    <div id="view-chart" class="card" style="padding:20px;display:none">
+      <h3 style="font-weight:700;color:white;margin-bottom:16px">Panorama de Stock — Última Muestra por Tienda</h3>
+      <div style="overflow-x:auto;padding-bottom:8px">
+        <div style="height:320px;min-width:1200px"><canvas id="mainChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- VIEW: TABLE -->
+    <div id="view-table" class="card" style="overflow:hidden;display:none">
+      <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-weight:700;color:white;font-size:14px">Detalle por Tienda</h3>
+        <input type="text" id="tableSearch" placeholder="Buscar tienda..." oninput="filterTable()" style="padding:6px 12px;border-radius:8px;font-size:13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;outline:none;width:180px">
+      </div>
+      <div style="overflow:auto;max-height:500px">
+        <table style="width:100%;text-align:left;font-size:13px;border-collapse:collapse">
+          <thead style="position:sticky;top:0;z-index:10;background:var(--navy2)">
+            <tr style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.05)">
+              <th style="padding:12px 20px">Tienda</th>
+              <th style="padding:12px 20px;text-align:center">Stock Actual</th>
+              <th style="padding:12px 20px;text-align:center">Horas BH</th>
+              <th style="padding:12px 20px;text-align:center">Horas Fantasma</th>
+              <th style="padding:12px 20px;text-align:center">Max Consec.</th>
+              <th style="padding:12px 20px;text-align:center">Impacto $</th>
+              <th style="padding:12px 20px">Diagnóstico</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEYENDA -->
+    <div class="card" style="padding:14px 20px;margin-top:16px;display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:#64748b">
+      <span><strong style="color:white">BH Confirmado:</strong> Stock=0 + Ventas=0 por ≥ N horas consecutivas → venta perdida real con impacto $.</span>
+      <span><strong style="color:white">BH Sospechoso:</strong> Stock=0 + Ventas=0 pero menos del umbral. Monitorear.</span>
+      <span><strong style="color:white">Venta Fantasma:</strong> Inventario lógico en 0 pero sí hubo ventas → error de captura de inventario.</span>
+    </div>
+  </div>
 </div>
 
 <script>
-    const WEBHOOK_URL = "https://genaroroustan1.app.n8n.cloud/webhook/analisis-bh";
+const WEBHOOK_URL = "https://genaroroustan1.app.n8n.cloud/webhook/analisis-bh";
+let globalData = null;
+let chartInstance = null;
 
-    document.getElementById('fechaInput').valueAsDate = new Date();
+document.getElementById('fechaInput').valueAsDate = new Date(Date.now()-86400000);
+document.getElementById('productSelect').addEventListener('change',e=>{if(e.target.value)document.getElementById('skuInput').value='';});
+document.getElementById('skuInput').addEventListener('input',e=>{if(e.target.value)document.getElementById('productSelect').value='';});
 
-    const productSelectEl = document.getElementById('productSelect');
-    const skuInputEl = document.getElementById('skuInput');
-    productSelectEl.addEventListener('change', () => { if (productSelectEl.value) skuInputEl.value = ''; });
-    skuInputEl.addEventListener('input', () => { if (skuInputEl.value) productSelectEl.value = ''; });
+async function runAnalysis(){
+  const sku=document.getElementById('productSelect').value||document.getElementById('skuInput').value;
+  if(!sku){alert("Seleccioná un producto o ingresá un SKU.");return;}
+  document.getElementById('btnLabel').innerText="Procesando...";
+  document.getElementById('btnIcon').style.display='none';
+  document.getElementById('loader').style.display='block';
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('btnRun').disabled=true;
+  try{
+    const params=new URLSearchParams();
+    params.append('fecha',document.getElementById('fechaInput').value);
+    params.append('sku',sku);
+    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const raw=await res.json();
+    const data=Array.isArray(raw)?raw[0]:raw;
+    globalData=data;
+    renderDashboard(data);
+    document.getElementById('btnExport').style.display='flex';
+  }catch(err){alert("Error: "+err.message);}
+  finally{
+    document.getElementById('btnLabel').innerText="Generar Análisis";
+    document.getElementById('btnIcon').style.display='';
+    document.getElementById('loader').style.display='none';
+    document.getElementById('btnRun').disabled=false;
+  }
+}
 
-    let globalData = [];
-    let chartInstance = null;
+function renderDashboard(data){
+  if(!data||!data.analisis_detalle||data.analisis_detalle.length===0){alert("Sin datos para esta fecha/SKU.");return;}
+  document.getElementById('kpiProd').innerText=data.producto||"N/A";
+  document.getElementById('kpiSku').innerText="SKU: "+(data.sku||"—");
+  const det=data.analisis_detalle;
+  document.getElementById('kpiBH').innerText=data.bh_confirmados??det.filter(t=>t.diagnostico==='BLACK_HOLE_CONFIRMADO').length;
+  document.getElementById('kpiBHsusp').innerText=data.bh_sospechosos??det.filter(t=>t.diagnostico==='BH_SOSPECHOSO').length;
+  document.getElementById('kpiFan').innerText=data.ventas_fantasma??det.filter(t=>t.diagnostico==='VENTA_FANTASMA').length;
+  document.getElementById('kpiMoney').innerText="$"+parseFloat(data.monto_perdido_total||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+  renderMatrix(det);
+  renderChart(det);
+  renderTable(det);
+  document.getElementById('dashboard').style.display='block';
+}
 
-    async function runAnalysis() {
-        const skuFinal = productSelectEl.value || skuInputEl.value;
-        if (!skuFinal) { alert("Por favor selecciona un producto o ingresa un SKU."); return; }
+function renderMatrix(detalle){
+  const HORAS=Array.from({length:24},(_,i)=>i);
+  const table=document.getElementById('matrixTable');
+  table.innerHTML='';
+  const thead=document.createElement('thead');
+  const hRow=document.createElement('tr');
+  const corner=document.createElement('th');
+  corner.className='corner row-header col-header';
+  corner.style.fontSize='9px';
+  corner.innerText='TIENDA \\ HORA';
+  hRow.appendChild(corner);
+  HORAS.forEach(h=>{
+    const th=document.createElement('th');
+    th.className='col-header';
+    th.innerText=String(h).padStart(2,'0');
+    hRow.appendChild(th);
+  });
+  thead.appendChild(hRow);
+  table.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  detalle.forEach(tienda=>{
+    if(!tienda.timeline||tienda.timeline.length===0)return;
+    const tr=document.createElement('tr');
+    const th=document.createElement('th');
+    th.className='row-header';
+    const diagColor=tienda.diagnostico==='BLACK_HOLE_CONFIRMADO'?'#f87171':tienda.diagnostico==='BH_SOSPECHOSO'?'#fca5a5':tienda.diagnostico==='VENTA_FANTASMA'?'#fcd34d':'#34d399';
+    th.innerHTML=`<span style="color:${diagColor};cursor:pointer" onclick="openModal(window.__bhData.find(t=>t.tienda_id=='${tienda.tienda_id}'))">T-${tienda.tienda_id}</span>`;
+    tr.appendChild(th);
+    const horaMap={};
+    (tienda.timeline||[]).forEach(t=>{horaMap[t.hora]=t;});
+    HORAS.forEach(h=>{
+      const td=document.createElement('td');
+      const t=horaMap[h];
+      if(!t){td.className='matrix-cell cell-empty';td.innerText='·';}
+      else{
+        let cls,label;
+        if(t.estado==='BLACK_HOLE_CONFIRMADO'){cls='cell-bh-conf';label='BH';}
+        else if(t.estado==='BH_SOSPECHOSO'){cls='cell-bh-susp';label=t.horas_consec||'?';}
+        else if(t.estado==='VENTA_FANTASMA'){cls='cell-fantasma';label='VF';}
+        else{cls='cell-ok';label=t.stock;}
+        td.className=`matrix-cell ${cls}`;
+        td.innerText=label;
+        const tip=`T-${tienda.tienda_id} | ${String(h).padStart(2,'0')}:00\nStock: ${t.stock} | Ventas: ${t.ventas}\nEstado: ${t.estado}`;
+        td.addEventListener('mouseenter',e=>{showTooltip(e,tip);});
+        td.addEventListener('mouseleave',hideTooltip);
+      }
+      td.onclick=()=>openModal(tienda);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  window.__bhData=detalle;
+}
 
-        const btnLabel = document.getElementById('btnLabel');
-        const btnIcon  = document.getElementById('btnIcon');
-        const loader   = document.getElementById('loader');
+function renderChart(detalle){
+  const sorted=[...detalle].sort((a,b)=>Number(a.tienda_id)-Number(b.tienda_id));
+  const ctx=document.getElementById('mainChart').getContext('2d');
+  if(chartInstance)chartInstance.destroy();
+  chartInstance=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:sorted.map(d=>'T-'+d.tienda_id),
+      datasets:[{label:'Stock Actual',data:sorted.map(d=>d.stock_actual),backgroundColor:sorted.map(d=>d.diagnostico==='BLACK_HOLE_CONFIRMADO'?'#dc2626':d.diagnostico==='BH_SOSPECHOSO'?'#f87171':d.diagnostico==='VENTA_FANTASMA'?'#d97706':'#11284a'),borderRadius:3,barPercentage:.7}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#64748b',font:{size:9},autoSkip:false,maxRotation:90}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#64748b',font:{size:10}},beginAtZero:true}}}
+  });
+}
 
-        btnLabel.innerText = "Procesando...";
-        btnIcon.classList.add('hidden');
-        loader.classList.remove('hidden');
-        document.getElementById('dashboardView').classList.add('hidden');
-        document.getElementById('btnExcel').classList.add('hidden');
+function renderTable(detalle){
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  detalle.forEach(d=>{
+    const tr=document.createElement('tr');
+    tr.style.cssText='border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s';
+    tr.onmouseenter=()=>tr.style.background='rgba(255,255,255,.03)';
+    tr.onmouseleave=()=>tr.style.background='';
+    tr.innerHTML=`
+      <td style="padding:12px 20px;font-weight:600;color:white">Tienda ${d.tienda_id}</td>
+      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${d.stock_actual===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${d.stock_actual}</td>
+      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_bh_count||0)>0?'color:#f87171':'color:#64748b'}">${d.horas_bh_count||0}</td>
+      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_fantasma||0)>0?'color:#fcd34d':'color:#64748b'}">${d.horas_fantasma||0}</td>
+      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;color:#94a3b8">${d.max_horas_consec||0}h</td>
+      <td style="padding:12px 20px;text-align:center;font-family:'Space Mono',monospace;${(d.impacto_usd||0)>0?'color:#fb923c;font-weight:700':'color:#475569'}">$${parseFloat(d.impacto_usd||0).toFixed(2)}</td>
+      <td style="padding:12px 20px">${badgeFor(d.diagnostico)}</td>
+    `;
+    tr.onclick=()=>openModal(d);
+    tbody.appendChild(tr);
+  });
+}
 
-        try {
-            // ─────────────────────────────────────────────────────────
-            // FIX CORS DEFINITIVO:
-            // URLSearchParams = Content-Type: application/x-www-form-urlencoded
-            // Este content-type es "simple request" → NO dispara preflight OPTIONS
-            // En n8n lees los valores con: $json.body.fecha  y  $json.body.sku
-            // ─────────────────────────────────────────────────────────
-            const params = new URLSearchParams();
-            params.append('fecha', document.getElementById('fechaInput').value);
-            params.append('sku', skuFinal);
+function badgeFor(diag){
+  if(diag==='BLACK_HOLE_CONFIRMADO')return`<span class="badge badge-bh"><i class="fa-solid fa-circle-dot pulse-red"></i> BH CONFIRMADO</span>`;
+  if(diag==='BH_SOSPECHOSO')return`<span class="badge badge-susp"><i class="fa-solid fa-triangle-exclamation"></i> SOSPECHOSO</span>`;
+  if(diag==='VENTA_FANTASMA')return`<span class="badge badge-fan"><i class="fa-solid fa-ghost"></i> FANTASMA</span>`;
+  return`<span class="badge badge-ok"><i class="fa-solid fa-check"></i> OK</span>`;
+}
 
-            const response = await fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
-            });
+function filterTable(){
+  const q=document.getElementById('tableSearch').value.toLowerCase();
+  document.querySelectorAll('#tableBody tr').forEach(tr=>{tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none';});
+}
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const rawData = await response.json();
-            const data = Array.isArray(rawData) ? rawData[0] : rawData;
-            globalData = data;
-            renderUI(data);
-            document.getElementById('btnExcel').classList.remove('hidden');
-
-        } catch (error) {
-            alert("Error de conexión: " + error.message);
-        } finally {
-            btnLabel.innerText = "Generar Análisis Black Holes";
-            btnIcon.classList.remove('hidden');
-            loader.classList.add('hidden');
-        }
+function openModal(tienda){
+  if(!tienda)return;
+  document.getElementById('modal-title').innerText=`Tienda ${tienda.tienda_id}`;
+  document.getElementById('modal-subtitle').innerHTML=`${badgeFor(tienda.diagnostico)} &nbsp; Stock actual: <strong>${tienda.stock_actual}</strong> &nbsp; Impacto: <strong style="color:var(--orange)">$${parseFloat(tienda.impacto_usd||0).toFixed(2)}</strong>`;
+  const tl=tienda.timeline||[];
+  const body=document.getElementById('modal-body');
+  let tlHTML=`<div style="margin-bottom:20px">
+    <p style="font-size:10px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;margin-bottom:8px">Timeline 24h</p>
+    <div style="display:flex;gap:2px;height:36px;border-radius:6px;overflow:hidden">`;
+  Array.from({length:24},(_,h)=>h).forEach(h=>{
+    const t=tl.find(x=>x.hora===h);
+    if(!t){tlHTML+=`<div class="tl-seg cell-empty" title="${h}:00 — sin dato" style="flex:1;min-width:0">·</div>`;}
+    else{
+      const cls=t.estado==='BLACK_HOLE_CONFIRMADO'?'cell-bh-conf':t.estado==='BH_SOSPECHOSO'?'cell-bh-susp':t.estado==='VENTA_FANTASMA'?'cell-fantasma':'cell-ok';
+      const lbl=t.estado==='BLACK_HOLE_CONFIRMADO'?'BH':t.estado==='BH_SOSPECHOSO'?(t.horas_consec||'?'):t.estado==='VENTA_FANTASMA'?'VF':t.stock;
+      tlHTML+=`<div class="tl-seg ${cls}" title="${h}:00 | Stock:${t.stock} | Ventas:${t.ventas}" style="flex:1;min-width:0">${lbl}</div>`;
     }
+  });
+  tlHTML+=`</div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;font-family:'Space Mono',monospace;color:#475569;margin-top:4px;padding:0 2px">
+      ${Array.from({length:7},(_,i)=>i*4).map(h=>`<span>${String(h).padStart(2,'0')}h</span>`).join('')}
+    </div></div>`;
+  let tableHTML=`<div style="overflow:auto;max-height:260px">
+    <table style="width:100%;font-size:12px;border-collapse:collapse">
+      <thead><tr style="font-size:9px;font-family:'Space Mono',monospace;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.1)">
+        <th style="padding:8px 12px 8px 0;text-align:left">Hora</th>
+        <th style="padding:8px 12px;text-align:center">Stock</th>
+        <th style="padding:8px 12px;text-align:center">Ventas</th>
+        <th style="padding:8px 12px;text-align:center">H.Consec</th>
+        <th style="padding:8px 12px;text-align:left">Estado</th>
+      </tr></thead><tbody>`;
+  tl.forEach(t=>{
+    const stMap={'BLACK_HOLE_CONFIRMADO':'<span style="color:#f87171;font-weight:700">⬤ BH CONFIRMADO</span>','BH_SOSPECHOSO':'<span style="color:#fca5a5">△ SOSPECHOSO</span>','VENTA_FANTASMA':'<span style="color:#fcd34d">◈ VTA FANTASMA</span>','OK':'<span style="color:#34d399">✓ OK</span>'};
+    tableHTML+=`<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+      <td style="padding:6px 12px 6px 0;font-family:'Space Mono',monospace;color:#94a3b8">${String(t.hora).padStart(2,'0')}:00</td>
+      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;${t.stock===0?'color:#f87171;font-weight:700':'color:#94a3b8'}">${t.stock}</td>
+      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;${t.ventas>0?'color:#34d399':'color:#475569'}">${t.ventas}</td>
+      <td style="padding:6px 12px;text-align:center;font-family:'Space Mono',monospace;color:#64748b">${t.horas_consec||0}</td>
+      <td style="padding:6px 12px">${stMap[t.estado]||t.estado}</td>
+    </tr>`;
+  });
+  tableHTML+=`</tbody></table></div>`;
+  body.innerHTML=tlHTML+tableHTML;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
-    function renderUI(data) {
-        const container = document.getElementById('dashboardView');
-        if (!data || !data.analisis_detalle || data.analisis_detalle.length === 0) {
-            alert("Atención: No se encontraron datos para esta fecha/SKU.");
-            return;
-        }
-        container.classList.remove('hidden');
-        document.getElementById('kpiProd').innerText = data.producto || "Producto Desconocido";
-        document.getElementById('kpiSku').innerText  = "SKU: " + data.sku;
+function switchTab(tab){
+  ['matrix','chart','table'].forEach(t=>{
+    document.getElementById('view-'+t).style.display=t===tab?'block':'none';
+    const btn=document.getElementById('tab-'+t);
+    btn.classList.toggle('active',t===tab);
+  });
+}
 
-        const detalles = data.analisis_detalle.filter(item => {
-            const id = parseInt(item.tienda_id?.toString().replace(/\D/g, ''), 10);
-            return !Number.isNaN(id) && id <= 89 && ![11, 17, 22, 24].includes(id);
-        });
+function showTooltip(e,text){
+  const el=document.getElementById('tooltip');
+  el.innerText=text;
+  el.style.display='block';
+  el.style.left=(e.clientX+14)+'px';
+  el.style.top=(e.clientY-10)+'px';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none';}
+document.addEventListener('mousemove',e=>{
+  const el=document.getElementById('tooltip');
+  if(el.style.display==='block'){el.style.left=(e.clientX+14)+'px';el.style.top=(e.clientY-10)+'px';}
+});
 
-        const tiendasUnicas = Object.values(detalles.reduce((acc, curr) => {
-            if (!acc[curr.tienda_id] || curr.stock < acc[curr.tienda_id].stock) acc[curr.tienda_id] = curr;
-            return acc;
-        }, {}));
-        tiendasUnicas.sort((a, b) => (a.tienda_id || 0) - (b.tienda_id || 0));
-
-        const bh  = tiendasUnicas.filter(d => d.estado.includes("BLACK HOLE"));
-        const fan = tiendasUnicas.filter(d => d.estado.includes("SIN STOCK"));
-        document.getElementById('kpiBH').innerText    = bh.length;
-        document.getElementById('kpiFan').innerText   = fan.length;
-        document.getElementById('kpiMoney').innerText = "$" + (bh.length * 35).toLocaleString();
-
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: tiendasUnicas.map(d => "T-" + (d.tienda_id || "?")),
-                datasets: [{
-                    label: 'Stock Físico',
-                    data: tiendasUnicas.map(d => d.stock),
-                    backgroundColor: tiendasUnicas.map(d =>
-                        d.estado.includes("BLACK") ? '#ef4444' :
-                        d.estado.includes("SIN")   ? '#f59e0b' : '#11284a'
-                    ),
-                    borderRadius: 4, barPercentage: 0.8
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true },
-                    x: { grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 90 } }
-                }
-            }
-        });
-
-        const grid = document.getElementById('heatmapContainer');
-        grid.innerHTML = "";
-        tiendasUnicas.forEach(d => {
-            const el = document.createElement('div');
-            el.className = d.estado.includes("BLACK") ? "heatmap-cell st-crit" :
-                           d.estado.includes("SIN")   ? "heatmap-cell st-warn" : "heatmap-cell st-ok";
-            el.innerHTML = `<span>T-${d.tienda_id || "?"}</span><span class="text-[9px] opacity-75">${d.stock}</span>`;
-            el.title = `Tienda ${d.tienda_id}\nStock: ${d.stock}\nEstado: ${d.estado}`;
-            grid.appendChild(el);
-        });
-
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = "";
-        tiendasUnicas.forEach(d => {
-            let badge = `<span class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold">OK</span>`;
-            if (d.estado.includes("BLACK")) badge = `<span class="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold">BLACK HOLE</span>`;
-            if (d.estado.includes("SIN"))   badge = `<span class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold">FANTASMA</span>`;
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 border-b border-slate-100";
-            tr.innerHTML = `
-                <td class="p-4 font-semibold text-slate-700">Tienda ${d.tienda_id || "N/A"}</td>
-                <td class="p-4 text-center font-mono font-bold ${d.stock === 0 ? 'text-red-600' : ''}">${d.stock}</td>
-                <td class="p-4 text-center text-slate-500">${d.ventas_cercanas || 0}</td>
-                <td class="p-4">${badge}</td>
-                <td class="p-4 text-center text-xs text-slate-400">${d.hora.split(' ')[1]}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function exportToExcel() {
-        if (!globalData.analisis_detalle) return;
-        let csv = "Tienda,Stock,Ventas,Estado,Hora\n";
-        globalData.analisis_detalle.forEach(d => {
-            csv += `${d.tienda_id || "N/A"},${d.stock},${d.ventas_cercanas || 0},${d.estado.replace(/[🔴🟡]/g,'').trim()},${d.hora}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `AMPM_Analisis_${document.getElementById('fechaInput').value}.csv`;
-        a.click();
-    }
+function exportToCSV(){
+  if(!globalData?.analisis_detalle)return;
+  let csv="Tienda,Stock_Actual,Horas_BH,Horas_Fantasma,Max_Consecutivas,Impacto_USD,Diagnostico\n";
+  globalData.analisis_detalle.forEach(d=>{csv+=`${d.tienda_id},${d.stock_actual},${d.horas_bh_count||0},${d.horas_fantasma||0},${d.max_horas_consec||0},${d.impacto_usd||0},${d.diagnostico}\n`;});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`AMPM_BH_${document.getElementById('fechaInput').value}.csv`;
+  a.click();
+}
 </script>
 </body>
 </html>
+
+
 
 
