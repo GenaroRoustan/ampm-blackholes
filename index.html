@@ -33,6 +33,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:#e2e8f0;min-h
 .c-bhs  {background:rgba(220,38,38,.28);color:#fca5a5}
 .c-fan  {background:rgba(217,119,6,.55);color:#fcd34d}
 .c-nd   {background:rgba(255,255,255,.03);color:rgba(255,255,255,.12)}
+.c-neg  {background:rgba(139,92,246,.45);color:#ddd6fe}
 /* MODAL */
 #modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(5px);z-index:200;align-items:center;justify-content:center}
 #modal-bg.open{display:flex}
@@ -49,6 +50,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:#e2e8f0;min-h
 .b-bhs{background:rgba(220,38,38,.1);color:#fca5a5;border:1px solid rgba(220,38,38,.2)}
 .b-fan{background:rgba(217,119,6,.2);color:#fcd34d;border:1px solid rgba(217,119,6,.3)}
 .b-ok {background:rgba(5,150,105,.15);color:#34d399;border:1px solid rgba(5,150,105,.25)}
+.b-neg{background:rgba(139,92,246,.18);color:#c4b5fd;border:1px solid rgba(139,92,246,.35)}
 .scanline{background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.014) 2px,rgba(255,255,255,.014) 4px)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fadeUp .35s ease both}.fu1{animation-delay:.04s}.fu2{animation-delay:.09s}.fu3{animation-delay:.14s}.fu4{animation-delay:.19s}
@@ -226,6 +228,7 @@ input,select{color:#e2e8f0 !important}
       <span><strong style="color:white">BH Confirmado:</strong> Stock=0 + Ventas=0 por ≥ N horas consecutivas → oportunidad perdida real.</span>
       <span><strong style="color:white">BH Sospechoso:</strong> Mismo patrón pero bajo el umbral. Monitorear.</span>
       <span><strong style="color:white">Venta Fantasma:</strong> Stock lógico=0 pero sí hubo ventas → error de captura.</span>
+      <span><strong style="color:#c4b5fd">Inv. Negativo:</strong> Stock &lt; 0 → error de sistema, requiere revisión urgente.</span>
     </div>
   </div>
 </div>
@@ -297,19 +300,27 @@ function render(data){
 const PESOS={0:2.82,1:1.52,2:1.3,3:1.08,4:0.22,5:0.22,6:0.87,7:2.82,8:4.34,9:3.47,10:4.99,11:6.72,12:4.12,13:4.34,14:5.21,15:4.77,16:3.9,17:5.21,18:8.89,19:10.85,20:5.21,21:4.99,22:8.03,23:4.12};
 const PU=35;
 
+// Tiendas excluidas — filtro doble en frontend
+const EXCLUIDAS = new Set(['98','99','11','17','22','24']);
+
 function reEval(detalle, thr){
-  return detalle.map(t=>{
+  return detalle
+    .filter(t => !EXCLUIDAS.has(String(t.tienda_id)))
+    .map(t=>{
     if(!t.timeline||!t.timeline.length) return t;
     let consec=0, impacto=0;
     const tl = t.timeline.map(h=>{
-      let estado, hc;
-      if(h.ventas>0 && h.stock===0){
-        estado='VENTA_FANTASMA'; consec=0; hc=0;
+      let estado, hc=0;
+      if(h.stock < 0){
+        // Inventario negativo — error de sistema, resetea racha BH
+        estado='INV_NEGATIVO'; consec=0;
+      } else if(h.ventas>0 && h.stock===0){
+        estado='VENTA_FANTASMA'; consec=0;
       } else if(h.stock===0 && h.ventas===0){
         consec++; hc=consec;
         estado = consec>=thr ? 'BLACK_HOLE_CONFIRMADO' : 'BH_SOSPECHOSO';
       } else {
-        estado='OK'; consec=0; hc=0;
+        estado='OK'; consec=0;
       }
       if(estado==='BLACK_HOLE_CONFIRMADO') impacto+=(PESOS[h.hora]/100)*PU;
       return {...h, estado, horas_consec:hc};
@@ -317,8 +328,9 @@ function reEval(detalle, thr){
     const hasBHC = tl.some(h=>h.estado==='BLACK_HOLE_CONFIRMADO');
     const hasBHS = tl.some(h=>h.estado==='BH_SOSPECHOSO');
     const hasFan = tl.some(h=>h.estado==='VENTA_FANTASMA');
-    const diag = hasBHC?'BLACK_HOLE_CONFIRMADO':hasBHS?'BH_SOSPECHOSO':hasFan?'VENTA_FANTASMA':'OK';
-    const maxC = Math.max(...tl.map(h=>h.horas_consec));
+    const hasNeg = tl.some(h=>h.estado==='INV_NEGATIVO');
+    const diag = hasBHC?'BLACK_HOLE_CONFIRMADO':hasBHS?'BH_SOSPECHOSO':hasFan?'VENTA_FANTASMA':hasNeg?'INV_NEGATIVO':'OK';
+    const maxC = Math.max(0,...tl.map(h=>h.horas_consec));
     return{
       ...t,
       timeline:tl,
@@ -326,11 +338,12 @@ function reEval(detalle, thr){
       impacto_usd:parseFloat(impacto.toFixed(2)),
       horas_bh_count:tl.filter(h=>h.estado==='BLACK_HOLE_CONFIRMADO').length,
       horas_fantasma:tl.filter(h=>h.estado==='VENTA_FANTASMA').length,
+      horas_negativo:tl.filter(h=>h.estado==='INV_NEGATIVO').length,
       max_horas_consec:maxC
     };
   }).sort((a,b)=>{
-    const o={BLACK_HOLE_CONFIRMADO:0,BH_SOSPECHOSO:1,VENTA_FANTASMA:2,OK:3};
-    return (o[a.diagnostico]??3)-(o[b.diagnostico]??3)||(b.impacto_usd||0)-(a.impacto_usd||0);
+    const o={BLACK_HOLE_CONFIRMADO:0,BH_SOSPECHOSO:1,VENTA_FANTASMA:2,INV_NEGATIVO:3,OK:4};
+    return (o[a.diagnostico]??4)-(o[b.diagnostico]??4)||(b.impacto_usd||0)-(a.impacto_usd||0);
   });
 }
 
@@ -393,6 +406,7 @@ function cellStyle(snap){
   if(snap.estado==='BLACK_HOLE_CONFIRMADO') return{cls:'c-bhc',lbl:'BH'};
   if(snap.estado==='BH_SOSPECHOSO')         return{cls:'c-bhs',lbl:snap.horas_consec||'?'};
   if(snap.estado==='VENTA_FANTASMA')        return{cls:'c-fan',lbl:'VF'};
+  if(snap.estado==='INV_NEGATIVO')          return{cls:'c-neg',lbl:snap.stock};
   return{cls:'c-ok',lbl:snap.stock};
 }
 
@@ -400,6 +414,7 @@ function diagColor(d){
   if(d==='BLACK_HOLE_CONFIRMADO')return'#f87171';
   if(d==='BH_SOSPECHOSO')return'#fca5a5';
   if(d==='VENTA_FANTASMA')return'#fcd34d';
+  if(d==='INV_NEGATIVO')return'#c4b5fd';
   return'#34d399';
 }
 
@@ -413,6 +428,7 @@ function buildChart(det){
     if(d.diagnostico==='BLACK_HOLE_CONFIRMADO')return'rgba(220,38,38,.9)';
     if(d.diagnostico==='BH_SOSPECHOSO')return'rgba(248,113,113,.6)';
     if(d.diagnostico==='VENTA_FANTASMA')return'rgba(217,119,6,.85)';
+    if(d.diagnostico==='INV_NEGATIVO')return'rgba(139,92,246,.8)';
     return'rgba(99,179,140,.75)';
   });
 
@@ -484,6 +500,7 @@ function mkBadge(d){
   if(d==='BLACK_HOLE_CONFIRMADO')return`<span class="badge b-bhc"><i class="fa-solid fa-circle-dot pulse-r"></i>BH CONFIRMADO</span>`;
   if(d==='BH_SOSPECHOSO')return`<span class="badge b-bhs"><i class="fa-solid fa-triangle-exclamation"></i>SOSPECHOSO</span>`;
   if(d==='VENTA_FANTASMA')return`<span class="badge b-fan"><i class="fa-solid fa-ghost"></i>FANTASMA</span>`;
+  if(d==='INV_NEGATIVO')return`<span class="badge b-neg"><i class="fa-solid fa-triangle-exclamation"></i>INV NEGATIVO</span>`;
   return`<span class="badge b-ok"><i class="fa-solid fa-check"></i>OK</span>`;
 }
 
@@ -570,6 +587,7 @@ function doExport(){
 </script>
 </body>
 </html>
+
 
 
 
