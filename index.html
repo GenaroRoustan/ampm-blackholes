@@ -159,7 +159,7 @@ input,select{color:#e2e8f0 !important}
       <div class="kpi-card fu fu4" style="box-shadow:0 0 28px rgba(232,114,0,.14);border-color:rgba(232,114,0,.28)">
         <div class="kpi-glow" style="background:var(--orange)"></div>
         <p style="font-size:9px;font-family:'Space Mono',monospace;color:#fb923c;text-transform:uppercase;margin-bottom:7px">Oportunidad Perdida</p>
-        <div class="kpi-val" style="color:#fb923c" id="kMoney">$0</div>
+        <div class="kpi-val" style="color:#fb923c" id="kMoney">C$ 0</div>
         <p style="font-size:9px;color:#475569;margin-top:3px">Solo BH confirmados</p>
       </div>
     </div>
@@ -288,7 +288,7 @@ function render(data){
   document.getElementById('kBH').innerText    = bhc;
   document.getElementById('kBHs').innerText   = bhs;
   document.getElementById('kFan').innerText   = fan;
-  document.getElementById('kMoney').innerText = "$"+money.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('kMoney').innerText = "C$ "+money.toLocaleString('es-NI',{minimumFractionDigits:2,maximumFractionDigits:2});
 
   buildMatrix(det);
   buildChart(det);
@@ -456,7 +456,7 @@ function buildChart(det){
           callbacks:{
             afterBody:(items)=>{
               const d=sorted[items[0].dataIndex];
-              return`Diagnóstico: ${d.diagnostico}\nImpacto: $${d.impacto_usd||0}`;
+              return`Diagnóstico: ${d.diagnostico}\nImpacto: C$ ${d.impacto_usd||0}`;
             }
           }
         }
@@ -485,7 +485,7 @@ function buildTable(det){
       <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_bh_count||0)>0?'color:#f87171':'color:#475569'}">${d.horas_bh_count||0}</td>
       <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.horas_fantasma||0)>0?'color:#fcd34d':'color:#475569'}">${d.horas_fantasma||0}</td>
       <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;color:#64748b">${d.max_horas_consec||0}h</td>
-      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.impacto_usd||0)>0?'color:#fb923c;font-weight:700':'color:#334155'}">$${parseFloat(d.impacto_usd||0).toFixed(2)}</td>
+      <td style="padding:11px 18px;text-align:center;font-family:'Space Mono',monospace;${(d.impacto_usd||0)>0?'color:#fb923c;font-weight:700':'color:#334155'}">C$ ${parseFloat(d.impacto_usd||0).toFixed(2)}</td>
       <td style="padding:11px 18px">${mkBadge(d.diagnostico)}</td>`;
     tb.appendChild(tr);
   });
@@ -508,7 +508,7 @@ function mkBadge(d){
 function openMod(tienda){
   if(!tienda)return;
   document.getElementById('m-title').innerText=`Tienda ${tienda.tienda_id}`;
-  document.getElementById('m-sub').innerHTML=`${mkBadge(tienda.diagnostico)}<span style="color:#64748b;font-size:12px">Stock: <strong style="color:white">${tienda.stock_actual}</strong></span><span style="color:#64748b;font-size:12px">Impacto: <strong style="color:var(--orange)">$${parseFloat(tienda.impacto_usd||0).toFixed(2)}</strong></span>`;
+  document.getElementById('m-sub').innerHTML=`${mkBadge(tienda.diagnostico)}<span style="color:#64748b;font-size:12px">Stock: <strong style="color:white">${tienda.stock_actual}</strong></span><span style="color:#64748b;font-size:12px">Impacto: <strong style="color:var(--orange)">C$ ${parseFloat(tienda.impacto_usd||0).toFixed(2)}</strong></span>`;
   const tl=tienda.timeline||[];
   let html='';
 
@@ -577,7 +577,7 @@ document.addEventListener('mousemove',e=>{const el=document.getElementById('tip'
 // ── EXPORT ───────────────────────────────────────────────────────
 function doExport(){
   if(!gDet.length)return;
-  let csv="Tienda,Stock_Actual,Horas_BH,H_Fantasma,Max_Consec,Impacto_USD,Diagnostico\n";
+  let csv="Tienda,Stock_Actual,Horas_BH,H_Fantasma,Max_Consec,Impacto_CS,Diagnostico\n";
   gDet.forEach(d=>csv+=`${d.tienda_id},${d.stock_actual},${d.horas_bh_count||0},${d.horas_fantasma||0},${d.max_horas_consec||0},${d.impacto_usd||0},${d.diagnostico}\n`);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
